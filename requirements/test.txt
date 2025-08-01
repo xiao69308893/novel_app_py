@@ -1,0 +1,7 @@
+# requirements/test.txt - 测试环境依赖
+-r dev.txt
+
+# 测试工具
+pytest-mock==3.12.0
+pytest-xdist==3.4.0
+coverage==7.3.2

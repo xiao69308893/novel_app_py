@@ -1,0 +1,13 @@
+# requirements/prod.txt - 生产环境依赖
+-r base.txt
+
+# 生产环境工具
+gunicorn==21.2.0
+supervisor==4.2.5
+
+# 监控
+prometheus-client==0.19.0
+sentry-sdk[fastapi]==1.38.0
+
+# 性能优化
+orjson==3.9.10
