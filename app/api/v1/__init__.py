@@ -13,6 +13,11 @@ from .chapters import router as chapters_router
 from .bookshelf import router as bookshelf_router
 from .reader import router as reader_router
 from .translation import router as translation_router
+from .admin import router as admin_router
+from .comments import router as comments_router
+from .search import router as search_router
+from .recommendations import router as recommendations_router
+from .analytics import router as analytics_router
 
 # 创建API路由器
 api_router = APIRouter()
@@ -58,4 +63,34 @@ api_router.include_router(
     translation_router,
     prefix="/translation",
     tags=["翻译"]
+)
+
+api_router.include_router(
+    admin_router,
+    prefix="/admin",
+    tags=["管理员"]
+)
+
+api_router.include_router(
+    comments_router,
+    prefix="/comments",
+    tags=["评论"]
+)
+
+api_router.include_router(
+    search_router,
+    prefix="/search",
+    tags=["搜索"]
+)
+
+api_router.include_router(
+    recommendations_router,
+    prefix="/recommendations",
+    tags=["推荐"]
+)
+
+api_router.include_router(
+    analytics_router,
+    prefix="/analytics",
+    tags=["数据分析"]
 )
