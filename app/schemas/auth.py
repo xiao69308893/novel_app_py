@@ -26,7 +26,7 @@ class LoginRequest(BaseModel):
 
 class PhoneLoginRequest(BaseModel):
     """手机验证码登录请求"""
-    phone: str = Field(..., regex=r'^1[3-9]\d{9}$', description="手机号")
+    phone: str = Field(..., pattern=r'^1[3-9]\d{9}$', description="手机号")
     verification_code: str = Field(..., min_length=4, max_length=6, description="验证码")
 
     class Config:
@@ -43,7 +43,7 @@ class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     password: str = Field(..., min_length=6, max_length=128, description="密码")
     email: Optional[EmailStr] = Field(None, description="邮箱")
-    phone: Optional[str] = Field(None, regex=r'^1[3-9]\d{9}$', description="手机号")
+    phone: Optional[str] = Field(None, pattern=r'^1[3-9]\d{9}$', description="手机号")
     invite_code: Optional[str] = Field(None, max_length=20, description="邀请码")
 
     @validator('username')
@@ -141,7 +141,7 @@ class ForgotPasswordRequest(BaseModel):
 # 验证码相关
 class SMSCodeRequest(BaseModel):
     """发送短信验证码请求"""
-    phone: str = Field(..., regex=r'^1[3-9]\d{9}$', description="手机号")
+    phone: str = Field(..., pattern=r'^1[3-9]\d{9}$', description="手机号")
     type: str = Field(..., description="验证码类型")
 
     @validator('type')
@@ -198,7 +198,7 @@ class VerificationCodeResponse(BaseModel):
 # 绑定相关
 class BindPhoneRequest(BaseModel):
     """绑定手机号请求"""
-    phone: str = Field(..., regex=r'^1[3-9]\d{9}$', description="手机号")
+    phone: str = Field(..., pattern=r'^1[3-9]\d{9}$', description="手机号")
     verification_code: str = Field(..., min_length=4, max_length=6, description="验证码")
 
     class Config:

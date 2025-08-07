@@ -12,10 +12,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from .base import Base
+from .base import BaseModel
 
 
-class Chapter(Base):
+class Chapter(BaseModel):
     """章节表"""
     __tablename__ = "chapters"
 
@@ -56,8 +56,10 @@ class Chapter(Base):
 
     # 约束
     __table_args__ = (
-        CheckConstraint("status IN ('draft', 'published', 'reviewing', 'locked')", name='chapter_status_check'),
-        {"postgresql_index": [("novel_id", "chapter_number")]},
+        CheckConstraint('chapter_number > 0', name='chapter_number_positive'),
+        CheckConstraint('word_count >= 0', name='word_count_non_negative'),
+        CheckConstraint('price >= 0', name='price_non_negative'),
+        CheckConstraint("status IN ('draft', 'published', 'locked')", name='chapter_status_check'),
     )
 
     # 关联关系
@@ -69,7 +71,7 @@ class Chapter(Base):
                             primaryjoin="and_(Chapter.id==Comment.target_id, Comment.target_type=='chapter')")
 
 
-class ChapterPurchase(Base):
+class ChapterPurchase(BaseModel):
     """章节购买记录表"""
     __tablename__ = "chapter_purchases"
 
@@ -91,7 +93,6 @@ class ChapterPurchase(Base):
     # 约束
     __table_args__ = (
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded')", name='purchase_status_check'),
-        {"postgresql_index": [("user_id", "chapter_id")]},
     )
 
     # 关联关系
@@ -100,7 +101,7 @@ class ChapterPurchase(Base):
     novel = relationship("Novel")
 
 
-class ReadingProgress(Base):
+class ReadingProgress(BaseModel):
     """阅读进度表"""
     __tablename__ = "reading_progress"
 
@@ -124,9 +125,7 @@ class ReadingProgress(Base):
     device_type = Column(String(20), comment="设备类型")
 
     # 约束
-    __table_args__ = (
-        {"postgresql_index": [("user_id", "novel_id")]},
-    )
+    __table_args__ = ()
 
     # 关联关系
     user = relationship("User", back_populates="reading_progress")
@@ -134,7 +133,7 @@ class ReadingProgress(Base):
     chapter = relationship("Chapter", back_populates="reading_progress")
 
 
-class Bookmark(Base):
+class Bookmark(BaseModel):
     """书签表"""
     __tablename__ = "bookmarks"
 
@@ -161,7 +160,7 @@ class Bookmark(Base):
     chapter = relationship("Chapter", back_populates="bookmarks")
 
 
-class UserFavorite(Base):
+class UserFavorite(BaseModel):
     """用户收藏表"""
     __tablename__ = "user_favorites"
 
@@ -176,9 +175,7 @@ class UserFavorite(Base):
     is_public = Column(Boolean, default=False, comment="是否公开")
 
     # 约束
-    __table_args__ = (
-        {"postgresql_index": [("user_id", "novel_id")]},
-    )
+    __table_args__ = ()
 
     # 关联关系
     user = relationship("User", back_populates="favorites")

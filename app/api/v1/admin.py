@@ -18,7 +18,7 @@ from app.schemas.admin import (
     RevenueStatsResponse, AdminLogResponse
 )
 from app.schemas.user import UserResponse
-from app.schemas.novel import NovelResponse
+from app.schemas.novel import NovelBasicResponse
 from app.services.admin_service import AdminService
 from app.services.user_service import UserService
 from app.services.novel_service import NovelService
@@ -196,7 +196,7 @@ async def delete_user(
 
 
 # 小说管理
-@router.get("/novels", response_model=ListResponse[NovelResponse], summary="获取小说列表")
+@router.get("/novels", response_model=ListResponse[NovelBasicResponse], summary="获取小说列表")
 async def get_novels(
         keyword: Optional[str] = Query(None, description="搜索关键词"),
         status: Optional[str] = Query(None, description="小说状态"),

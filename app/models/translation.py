@@ -12,10 +12,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from .base import Base
+from .base import BaseModel
 
 
-class AIModel(Base):
+class AIModel(BaseModel):
     """AI模型配置表"""
     __tablename__ = "ai_models"
 
@@ -68,7 +68,7 @@ class AIModel(Base):
     )
 
 
-class TranslationConfig(Base):
+class TranslationConfig(BaseModel):
     """翻译配置模板表"""
     __tablename__ = "translation_configs"
 
@@ -138,7 +138,7 @@ class TranslationConfig(Base):
     review_model = relationship("AIModel", foreign_keys=[review_model_id])
 
 
-class TranslationProject(Base):
+class TranslationProject(BaseModel):
     """翻译项目表"""
     __tablename__ = "translation_projects"
 
@@ -216,7 +216,7 @@ class TranslationProject(Base):
     tasks = relationship("TranslationTask", back_populates="project")
 
 
-class TranslatedNovel(Base):
+class TranslatedNovel(BaseModel):
     """翻译后小说表"""
     __tablename__ = "translated_novels"
 
@@ -273,7 +273,7 @@ class TranslatedNovel(Base):
     chapters = relationship("TranslatedChapter", back_populates="novel")
 
 
-class CharacterMapping(Base):
+class CharacterMapping(BaseModel):
     """角色映射表"""
     __tablename__ = "character_mappings"
 
@@ -316,7 +316,6 @@ class CharacterMapping(Base):
             name='character_type_check'),
         CheckConstraint('importance_level BETWEEN 1 AND 10', name='importance_level_check'),
         CheckConstraint('mapping_confidence BETWEEN 0 AND 1', name='mapping_confidence_check'),
-        {"postgresql_index": [("translation_project_id", "original_name")]},
     )
 
     # 关联关系
@@ -324,7 +323,7 @@ class CharacterMapping(Base):
     verifier = relationship("User")
 
 
-class TranslatedChapter(Base):
+class TranslatedChapter(BaseModel):
     """翻译后章节表"""
     __tablename__ = "translated_chapters"
 
@@ -387,7 +386,6 @@ class TranslatedChapter(Base):
         CheckConstraint(
             "status IN ('pending', 'outline_generating', 'translating', 'quality_checking', 'completed', 'failed', 'reviewing')",
             name='translated_chapter_status_check'),
-        {"postgresql_index": [("translation_project_id", "original_chapter_id", "version_number")]},
     )
 
     # 关联关系
@@ -397,7 +395,7 @@ class TranslatedChapter(Base):
     reviewer = relationship("User")
 
 
-class TranslationTask(Base):
+class TranslationTask(BaseModel):
     """翻译任务队列表"""
     __tablename__ = "translation_tasks"
 

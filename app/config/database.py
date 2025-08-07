@@ -13,11 +13,9 @@ import logging
 
 from .settings import settings
 
-db_url = settings.DATABASE_URL.default if hasattr(settings.DATABASE_URL, "default") else settings.DATABASE_URL
-print(db_url)
 # 创建异步数据库引擎
 engine = create_async_engine(
-    url=db_url,
+    url=settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
     pool_size=settings.DATABASE_POOL_SIZE,
     max_overflow=settings.DATABASE_MAX_OVERFLOW,

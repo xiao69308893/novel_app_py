@@ -5,17 +5,17 @@
 
 from sqlalchemy import (
     Column, String, Integer, Boolean, Text,
-    TIMESTAMP, ForeignKey, JSON, CheckConstraint, INET
+    TIMESTAMP, ForeignKey, JSON, CheckConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from .base import Base
+from .base import BaseModel
 
 
-class Comment(Base):
+class Comment(BaseModel):
     """评论表"""
     __tablename__ = "comments"
 
@@ -45,7 +45,7 @@ class Comment(Base):
     status = Column(String(20), default='published', comment="状态")
 
     # IP信息
-    ip_address = Column(INET, comment="IP地址")
+    ip_address = Column(String(45), comment="IP地址")  # IPv6最长为45字符
 
     # 约束
     __table_args__ = (
@@ -70,7 +70,7 @@ class Comment(Base):
                            foreign_keys=[target_id])
 
 
-class CommentLike(Base):
+class CommentLike(BaseModel):
     """评论点赞表"""
     __tablename__ = "comment_likes"
 
@@ -81,7 +81,7 @@ class CommentLike(Base):
 
     # 约束
     __table_args__ = (
-        {"postgresql_index": [("user_id", "comment_id")]},
+        CheckConstraint("action IN ('like', 'dislike')", name='comment_like_action_check'),
     )
 
     # 关联关系

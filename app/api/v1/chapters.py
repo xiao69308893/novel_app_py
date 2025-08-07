@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_db
 from app.core.deps import get_current_active_user, get_pagination_params
 from app.schemas.base import BaseResponse, ListResponse
-from app.schemas.novel import ChapterResponse, CommentResponse, CommentCreateRequest
+from app.schemas.novel import ChapterBasicResponse, ChapterDetailResponse, CommentResponse, CommentCreateRequest
 from app.services.chapter_service import ChapterService
 from app.models.user import User
 
@@ -27,7 +27,7 @@ def get_chapter_service(db: AsyncSession = Depends(get_db)) -> ChapterService:
     return ChapterService(db)
 
 
-@router.get("/novels/{novel_id}/chapters", response_model=ListResponse[ChapterResponse], summary="获取章节列表")
+@router.get("/novels/{novel_id}/chapters", response_model=ListResponse[ChapterBasicResponse], summary="获取章节列表")
 async def get_novel_chapters(
         novel_id: str,
         pagination: dict = Depends(get_pagination_params),
@@ -55,7 +55,7 @@ async def get_novel_chapters(
     )
 
 
-@router.get("/{chapter_id}", response_model=BaseResponse[ChapterResponse], summary="获取章节详情")
+@router.get("/{chapter_id}", response_model=BaseResponse[ChapterDetailResponse], summary="获取章节详情")
 async def get_chapter_detail(
         chapter_id: str,
         current_user: Optional[User] = Depends(get_current_active_user),

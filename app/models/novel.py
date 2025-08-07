@@ -12,10 +12,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from .base import Base
+from .base import BaseModel
 
 
-class Category(Base):
+class Category(BaseModel):
     """小说分类表"""
     __tablename__ = "categories"
 
@@ -41,7 +41,7 @@ class Category(Base):
     novels = relationship("Novel", back_populates="category")
 
 
-class Tag(Base):
+class Tag(BaseModel):
     """小说标签表"""
     __tablename__ = "tags"
 
@@ -59,7 +59,7 @@ class Tag(Base):
     novel_tags = relationship("NovelTag", back_populates="tag")
 
 
-class Author(Base):
+class Author(BaseModel):
     """作者表"""
     __tablename__ = "authors"
 
@@ -96,7 +96,7 @@ class Author(Base):
     novels = relationship("Novel", back_populates="author")
 
 
-class Novel(Base):
+class Novel(BaseModel):
     """小说表"""
     __tablename__ = "novels"
 
@@ -174,7 +174,7 @@ class Novel(Base):
                             primaryjoin="and_(Novel.id==Comment.target_id, Comment.target_type=='novel')")
 
 
-class NovelTag(Base):
+class NovelTag(BaseModel):
     """小说标签关联表"""
     __tablename__ = "novel_tags"
 
@@ -184,16 +184,14 @@ class NovelTag(Base):
                     nullable=False, comment="标签ID")
 
     # 约束
-    __table_args__ = (
-        {"postgresql_index": [("novel_id", "tag_id")]},
-    )
+    __table_args__ = ()
 
     # 关联关系
     novel = relationship("Novel", back_populates="novel_tags")
     tag = relationship("Tag", back_populates="novel_tags")
 
 
-class NovelRating(Base):
+class NovelRating(BaseModel):
     """小说评分表"""
     __tablename__ = "novel_ratings"
 
@@ -208,7 +206,6 @@ class NovelRating(Base):
     # 约束
     __table_args__ = (
         CheckConstraint('rating BETWEEN 1 AND 5', name='rating_value_check'),
-        {"postgresql_index": [("novel_id", "user_id")]},
     )
 
     # 关联关系

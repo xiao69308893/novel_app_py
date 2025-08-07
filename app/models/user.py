@@ -5,17 +5,17 @@
 
 from sqlalchemy import (
     Column, String, Integer, Boolean, Date, DECIMAL,
-    Text, TIMESTAMP, INET, ForeignKey, JSON, CheckConstraint
+    Text, TIMESTAMP, ForeignKey, JSON, CheckConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from .base import Base
+from .base import BaseModel
 
 
-class User(Base):
+class User(BaseModel):
     """用户基础表"""
     __tablename__ = "users"
 
@@ -48,7 +48,7 @@ class User(Base):
 
     # 安全相关
     last_login_at = Column(TIMESTAMP(timezone=True), comment="最后登录时间")
-    last_login_ip = Column(INET, comment="最后登录IP")
+    last_login_ip = Column(String(45), comment="最后登录IP")  # IPv6最长45字符
     failed_login_attempts = Column(Integer, default=0, comment="失败登录尝试次数")
     locked_until = Column(TIMESTAMP(timezone=True), comment="锁定到期时间")
 
@@ -77,7 +77,7 @@ class User(Base):
     ratings = relationship("NovelRating", back_populates="user")
 
 
-class UserProfile(Base):
+class UserProfile(BaseModel):
     """用户详细资料表"""
     __tablename__ = "user_profiles"
 
@@ -106,7 +106,7 @@ class UserProfile(Base):
     user = relationship("User", back_populates="profile")
 
 
-class UserSettings(Base):
+class UserSettings(BaseModel):
     """用户设置表"""
     __tablename__ = "user_settings"
 
@@ -141,7 +141,7 @@ class UserSettings(Base):
     user = relationship("User", back_populates="settings")
 
 
-class UserStatistics(Base):
+class UserStatistics(BaseModel):
     """用户统计表"""
     __tablename__ = "user_statistics"
 
@@ -175,7 +175,7 @@ class UserStatistics(Base):
     user = relationship("User", back_populates="statistics")
 
 
-class LoginLog(Base):
+class LoginLog(BaseModel):
     """登录日志表"""
     __tablename__ = "login_logs"
 
@@ -184,7 +184,7 @@ class LoginLog(Base):
 
     # 登录信息
     login_type = Column(String(20), nullable=False, comment="登录类型")
-    ip_address = Column(INET, nullable=False, comment="IP地址")
+    ip_address = Column(String(45), nullable=False, comment="IP地址")  # IPv6最长45字符
     user_agent = Column(Text, comment="用户代理")
     device_info = Column(JSON, comment="设备信息")
 

@@ -11,22 +11,42 @@ from .auth import (
     PasswordChangeRequest, SMSCodeRequest, EmailCodeRequest
 )
 from .user import (
-    UserResponse, UserProfileResponse, UserSettingsResponse,
-    UserStatsResponse, UserUpdateRequest
+    UserProfileResponse, UserSettingsResponse,
+    UserStatisticsResponse, UserProfileUpdate
 )
 from .novel import (
-    NovelResponse, NovelListResponse, ChapterResponse,
-    ChapterListResponse, CommentResponse, CommentCreateRequest
+    NovelBasicResponse, NovelDetailResponse, NovelListResponse, 
+    ChapterBasicResponse, ChapterDetailResponse, ChapterListResponse, 
+    CommentResponse, CommentCreateRequest, NovelSearchRequest,
+    CategoryResponse, TagResponse, AuthorResponse
+)
+from .analytics import (
+    UserAnalyticsOverviewResponse, ReadingStatsResponse, ReadingHabitsResponse,
+    ReadingPreferencesResponse, NovelStatsResponse, AuthorStatsResponse,
+    CategoryStatsResponse, RevenueStatsResponse, BehaviorAnalysisResponse,
+    ReadingTrendResponse, HotTrendResponse, NovelComparisonResponse,
+    AuthorComparisonResponse, ReadingHeatmapResponse, ReadingFunnelResponse,
+    UserRetentionResponse, UserSegmentResponse, DashboardSummaryResponse,
+    AnalyticsRequest, ComparisonRequest
 )
 
 __all__ = [
     "BaseResponse", "ListResponse", "PaginationInfo", "ErrorResponse",
     "LoginRequest", "RegisterRequest", "TokenResponse",
     "PasswordChangeRequest", "SMSCodeRequest", "EmailCodeRequest",
-    "UserResponse", "UserProfileResponse", "UserSettingsResponse",
-    "UserStatsResponse", "UserUpdateRequest",
-    "NovelResponse", "NovelListResponse", "ChapterResponse",
-    "ChapterListResponse", "CommentResponse", "CommentCreateRequest"
+    "UserProfileResponse", "UserSettingsResponse",
+    "UserStatisticsResponse", "UserProfileUpdate",
+    "NovelBasicResponse", "NovelDetailResponse", "NovelListResponse",
+    "ChapterBasicResponse", "ChapterDetailResponse", "ChapterListResponse", 
+    "CommentResponse", "CommentCreateRequest", "NovelSearchRequest",
+    "CategoryResponse", "TagResponse", "AuthorResponse",
+    "UserAnalyticsOverviewResponse", "ReadingStatsResponse", "ReadingHabitsResponse",
+    "ReadingPreferencesResponse", "NovelStatsResponse", "AuthorStatsResponse",
+    "CategoryStatsResponse", "RevenueStatsResponse", "BehaviorAnalysisResponse",
+    "ReadingTrendResponse", "HotTrendResponse", "NovelComparisonResponse",
+    "AuthorComparisonResponse", "ReadingHeatmapResponse", "ReadingFunnelResponse",
+    "UserRetentionResponse", "UserSegmentResponse", "DashboardSummaryResponse",
+    "AnalyticsRequest", "ComparisonRequest"
 ]
 
 

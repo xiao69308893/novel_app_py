@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_db
 from app.core.deps import get_current_active_user, get_pagination_params
 from app.schemas.base import BaseResponse, ListResponse
-from app.schemas.novel import NovelResponse, NovelListResponse
+from app.schemas.novel import NovelBasicResponse, NovelDetailResponse, NovelListResponse
 from app.services.novel_service import NovelService
 from app.models.user import User
 
@@ -27,7 +27,7 @@ def get_novel_service(db: AsyncSession = Depends(get_db)) -> NovelService:
     return NovelService(db)
 
 
-@router.get("", response_model=ListResponse[NovelResponse], summary="获取小说列表")
+@router.get("", response_model=ListResponse[NovelBasicResponse], summary="获取小说列表")
 async def get_novels(
         category_id: Optional[str] = Query(None, description="分类ID"),
         status: Optional[str] = Query(None, description="小说状态"),
@@ -61,7 +61,7 @@ async def get_novels(
     )
 
 
-@router.get("/hot", response_model=ListResponse[NovelResponse], summary="获取热门小说")
+@router.get("/hot", response_model=ListResponse[NovelBasicResponse], summary="获取热门小说")
 async def get_hot_novels(
         pagination: dict = Depends(get_pagination_params),
         novel_service: NovelService = Depends(get_novel_service)
@@ -85,7 +85,7 @@ async def get_hot_novels(
     )
 
 
-@router.get("/new", response_model=ListResponse[NovelResponse], summary="获取最新小说")
+@router.get("/new", response_model=ListResponse[NovelBasicResponse], summary="获取最新小说")
 async def get_new_novels(
         pagination: dict = Depends(get_pagination_params),
         novel_service: NovelService = Depends(get_novel_service)
@@ -109,7 +109,7 @@ async def get_new_novels(
     )
 
 
-@router.get("/search", response_model=ListResponse[NovelResponse], summary="搜索小说")
+@router.get("/search", response_model=ListResponse[NovelBasicResponse], summary="搜索小说")
 async def search_novels(
         keyword: str = Query(..., description="搜索关键词"),
         category_id: Optional[str] = Query(None, description="分类ID"),
@@ -143,7 +143,7 @@ async def search_novels(
     )
 
 
-@router.get("/{novel_id}", response_model=BaseResponse[NovelResponse], summary="获取小说详情")
+@router.get("/{novel_id}", response_model=BaseResponse[NovelDetailResponse], summary="获取小说详情")
 async def get_novel_detail(
         novel_id: str,
         novel_service: NovelService = Depends(get_novel_service)
@@ -158,7 +158,7 @@ async def get_novel_detail(
     )
 
 
-@router.get("/{novel_id}/similar", response_model=ListResponse[NovelResponse], summary="获取相似小说")
+@router.get("/{novel_id}/similar", response_model=ListResponse[NovelBasicResponse], summary="获取相似小说")
 async def get_similar_novels(
         novel_id: str,
         limit: int = Query(10, ge=1, le=50, description="返回数量"),

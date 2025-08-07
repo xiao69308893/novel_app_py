@@ -16,7 +16,7 @@ from app.schemas.search import (
     SearchResponse, SearchSuggestionResponse, SearchHistoryResponse,
     HotSearchResponse, SearchStatsResponse
 )
-from app.schemas.novel import NovelResponse
+from app.schemas.novel import NovelBasicResponse
 from app.schemas.user import UserResponse
 from app.services.search_service import SearchService
 from app.models.user import User
@@ -31,7 +31,7 @@ def get_search_service(db: AsyncSession = Depends(get_db)) -> SearchService:
     return SearchService(db)
 
 
-@router.get("/novels", response_model=ListResponse[NovelResponse], summary="搜索小说")
+@router.get("/novels", response_model=ListResponse[NovelBasicResponse], summary="搜索小说")
 async def search_novels(
         q: str = Query(..., description="搜索关键词"),
         category_id: Optional[str] = Query(None, description="分类ID"),

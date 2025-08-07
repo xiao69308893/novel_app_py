@@ -122,7 +122,7 @@ class SearchRequest(BaseSchema):
     page: int = Field(default=1, ge=1, description="页码")
     page_size: int = Field(default=20, ge=1, le=100, description="每页数量")
     sort_by: Optional[str] = Field(default=None, description="排序字段")
-    sort_order: Optional[str] = Field(default="desc", regex="^(asc|desc)$", description="排序方向")
+    sort_order: Optional[str] = Field(default="desc", pattern="^(asc|desc)$", description="排序方向")
 
 
 class FilterRequest(BaseSchema):

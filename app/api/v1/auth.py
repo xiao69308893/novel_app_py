@@ -18,7 +18,7 @@ from app.schemas.auth import (
     PasswordChangeRequest, SMSCodeRequest, EmailCodeRequest
 )
 from app.schemas.base import BaseResponse, SuccessResponse
-from app.schemas.user import UserResponse
+from app.schemas.user import UserProfileResponse
 from app.services.auth_service import AuthService
 from app.models.user import User
 
@@ -128,7 +128,7 @@ async def logout(
     return SuccessResponse(message="登出成功")
 
 
-@router.get("/user", response_model=BaseResponse[UserResponse], summary="获取当前用户信息")
+@router.get("/user", response_model=BaseResponse[UserProfileResponse], summary="获取当前用户信息")
 async def get_current_user_info(
         current_user: User = Depends(get_current_active_user)
 ) -> Any:
@@ -137,7 +137,7 @@ async def get_current_user_info(
     """
 
     return BaseResponse(
-        data=UserResponse.model_validate(current_user),
+        data=UserProfileResponse.model_validate(current_user),
         message="获取用户信息成功"
     )
 

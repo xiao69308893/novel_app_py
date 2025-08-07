@@ -6,13 +6,14 @@
 """
 
 from typing import Any, Dict, List, Optional, Union
-from pydantic import AnyHttpUrl, BaseConfig, EmailStr, validator, Field
+from pydantic import AnyHttpUrl, EmailStr, validator, Field
+from pydantic_settings import BaseSettings
 import secrets
 import os
 from pathlib import Path
 
 
-class Settings(BaseConfig):
+class Settings(BaseSettings):
     """应用设置类"""
 
     # 基础应用配置
@@ -21,6 +22,11 @@ class Settings(BaseConfig):
     DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
+    ENVIRONMENT: str = Field(default="development", description="运行环境")
+    
+    # 服务器基础配置
+    HOST: str = Field(default="0.0.0.0", description="服务器主机")
+    PORT: int = Field(default=8000, description="服务器端口")
 
     # 服务器配置
     SERVER_NAME: str = "localhost"
@@ -32,6 +38,7 @@ class Settings(BaseConfig):
         "http://localhost:8080",
         "http://localhost:8000"
     ]
+    CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"], description="CORS允许的源")
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
@@ -76,6 +83,7 @@ class Settings(BaseConfig):
     SMTP_PORT: Optional[int] = Field(default=587, description="SMTP端口")
     SMTP_HOST: Optional[str] = Field(default=None, description="SMTP主机")
     SMTP_USER: Optional[EmailStr] = Field(default=None, description="SMTP用户名")
+    SMTP_USERNAME: Optional[str] = Field(default=None, description="SMTP用户名(字符串)")
     SMTP_PASSWORD: Optional[str] = Field(default=None, description="SMTP密码")
     EMAIL_FROM: Optional[EmailStr] = Field(default=None, description="发件人邮箱")
     EMAIL_FROM_NAME: Optional[str] = Field(default=None, description="发件人名称")
@@ -172,6 +180,7 @@ class Settings(BaseConfig):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "allow"  # 允许额外字段
 
     @property
     def upload_path(self) -> Path:
