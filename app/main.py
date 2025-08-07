@@ -1,4 +1,4 @@
-# app/main.py
+# app/settings.py
 # -*- coding: utf-8 -*-
 """
 FastAPI主应用入口
@@ -14,7 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 import time
 
-from app.config import settings, init_db, close_db
+from app.config import settings
+from app.config.database import init_db, close_db
 from app.core.middleware import (
     LoggingMiddleware,
     RateLimitMiddleware,
