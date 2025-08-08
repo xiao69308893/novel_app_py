@@ -8,7 +8,6 @@
 from typing import List, Dict, Any, Optional
 from datetime import date, datetime
 from pydantic import BaseModel, Field
-from .base import BaseResponse
 
 
 # 用户分析概览
@@ -27,7 +26,7 @@ class UserAnalyticsOverviewResponse(BaseModel):
     last_active_date: Optional[date] = Field(None, description="最后活跃日期")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": "123e4567-e89b-12d3-a456-426614174000",
                 "registration_date": "2024-01-01",
@@ -55,7 +54,7 @@ class ReadingStatsResponse(BaseModel):
     reading_trend: List[Dict[str, Any]] = Field(..., description="阅读趋势")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "period": "30d",
                 "total_reading_time": 1800,
@@ -82,7 +81,7 @@ class ReadingHabitsResponse(BaseModel):
     most_active_weekday: int = Field(..., description="最活跃星期")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "hour_distribution": [
                     {"hour": 9, "count": 15},
@@ -111,7 +110,7 @@ class ReadingPreferencesResponse(BaseModel):
     preferred_length_range: Dict[str, int] = Field(..., description="偏好长度范围")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "category_preferences": [
                     {"category": "玄幻", "count": 10, "avg_progress": 0.8},
@@ -148,7 +147,7 @@ class NovelStatsResponse(BaseModel):
     rating: float = Field(..., description="评分")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "title": "修仙传说",
@@ -183,7 +182,7 @@ class AuthorStatsResponse(BaseModel):
     total_favorites: int = Field(..., description="总收藏数")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "author": "作者A",
                 "period": "30d",
@@ -209,7 +208,7 @@ class CategoryStatsResponse(BaseModel):
     period: str = Field(..., description="统计周期")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "category": "玄幻",
                 "novel_count": 100,
@@ -232,7 +231,7 @@ class RevenueStatsResponse(BaseModel):
     revenue_trend: List[Dict[str, Any]] = Field(..., description="收入趋势")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "period": "30d",
                 "total_revenue": 5000.0,
@@ -257,7 +256,7 @@ class BehaviorAnalysisResponse(BaseModel):
     activity_level: str = Field(..., description="活跃度等级")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": "123e4567-e89b-12d3-a456-426614174000",
                 "period": "30d",
@@ -277,25 +276,22 @@ class BehaviorAnalysisResponse(BaseModel):
 
 
 # 阅读趋势
-class ReadingTrendResponse(BaseModel):
-    """阅读趋势响应"""
-    date: date = Field(..., description="日期")
-    active_readers: int = Field(..., description="活跃读者数")
-    total_reading_time: int = Field(..., description="总阅读时间(分钟)")
-    reading_sessions: int = Field(..., description="阅读会话数")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "date": "2024-01-01",
-                "active_readers": 500,
-                "total_reading_time": 15000,
-                "reading_sessions": 800
-            }
-        }
-
-
-# 热门趋势
+# class ReadingTrendResponse(BaseModel):
+#     """阅读趋势响应"""
+#     date: date = Field(..., description="日期")
+#     active_readers: int = Field(..., description="活跃读者数")
+#     total_reading_time: int = Field(..., description="总阅读时间(分钟)")
+#     reading_sessions: int = Field(..., description="阅读会话数")
+#
+#     class Config:
+#         json_schema_extra = {
+#             "example": {
+#                 "date": "2024-01-01",
+#                 "active_readers": 500,
+#                 "total_reading_time": 15000,
+#                 "reading_sessions": 800
+#             }
+#         }
 class HotTrendResponse(BaseModel):
     """热门趋势响应"""
     novel_id: str = Field(..., description="小说ID")
@@ -307,7 +303,7 @@ class HotTrendResponse(BaseModel):
     trend_score: float = Field(..., description="趋势分数")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "title": "修仙传说",
@@ -334,7 +330,7 @@ class NovelComparisonResponse(BaseModel):
     view_count: int = Field(..., description="浏览量")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "title": "修仙传说",
@@ -359,7 +355,7 @@ class AuthorComparisonResponse(BaseModel):
     readers: int = Field(..., description="读者数")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "author": "作者A",
                 "novel_count": 5,
@@ -378,7 +374,7 @@ class ReadingHeatmapResponse(BaseModel):
     heatmap_data: List[Dict[str, Any]] = Field(..., description="热力图数据")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": "123e4567-e89b-12d3-a456-426614174000",
                 "period": "30d",
@@ -398,7 +394,7 @@ class ReadingFunnelResponse(BaseModel):
     overall_conversion_rate: float = Field(..., description="总转化率")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "period": "30d",
                 "funnel_steps": [
@@ -421,7 +417,7 @@ class UserRetentionResponse(BaseModel):
     retention_rates: Dict[str, float] = Field(..., description="留存率")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "cohort_period": "第1周",
                 "cohort_size": 100,
@@ -443,7 +439,7 @@ class UserSegmentResponse(BaseModel):
     percentage: float = Field(..., description="占比")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "segment_name": "重度用户",
                 "user_count": 150,
@@ -464,7 +460,7 @@ class DashboardSummaryResponse(BaseModel):
     trending_novels: List[str] = Field(..., description="趋势小说")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "active_users_today": 1500,
                 "active_users_change": 50,
@@ -484,7 +480,7 @@ class AnalyticsRequest(BaseModel):
     end_date: Optional[date] = Field(None, description="结束日期")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "period": "30d",
                 "start_date": "2024-01-01",
@@ -500,7 +496,7 @@ class ComparisonRequest(BaseModel):
     period: str = Field(default="30d", description="统计周期")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "items": ["123e4567-e89b-12d3-a456-426614174000", "456e7890-e89b-12d3-a456-426614174001"],
                 "period": "30d"

@@ -1248,17 +1248,17 @@
 #         except Exception as e:
 #             raise AIServiceError(f"质量检查失败: {str(e)}")
 #
-#     async def test_model_connection(self, model_id: uuid.UUID) -> Dict[str, Any]:
+#     async def test_model_connection(self, models_id: uuid.UUID) -> Dict[str, Any]:
 #         """
 #         测试AI模型连接
 #
 #         Args:
-#             model_id: 模型ID
+#             models_id: 模型ID
 #
 #         Returns:
 #             测试结果
 #         """
-#         model = await self.get(model_id)
+#         model = await self.get(models_id)
 #         if not model:
 #             raise AIModelNotFoundError("AI模型不存在")
 #
@@ -1422,7 +1422,7 @@
 #
 #     async def _record_model_usage(
 #             self,
-#             model_id: uuid.UUID,
+#             models_id: uuid.UUID,
 #             input_tokens: int,
 #             output_tokens: int,
 #             cost: float
@@ -1430,7 +1430,7 @@
 #         """记录模型使用统计"""
 #         stmt = (
 #             update(AIModel)
-#             .where(AIModel.id == model_id)
+#             .where(AIModel.id == models_id)
 #             .values(
 #                 total_requests=AIModel.total_requests + 1,
 #                 total_tokens=AIModel.total_tokens + input_tokens + output_tokens,

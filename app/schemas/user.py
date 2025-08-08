@@ -30,7 +30,7 @@ class UserProfileUpdate(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "nickname": "小说爱好者",
                 "gender": "male",
@@ -72,7 +72,7 @@ class UserProfileResponse(BaseModel):
     website: Optional[str] = Field(None, description="个人网站")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 用户设置相关
@@ -96,7 +96,7 @@ class UserSettingsUpdate(BaseModel):
     allow_friend_requests: Optional[bool] = Field(None, description="允许好友请求")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "reader_theme": "dark",
                 "font_size": 18,
@@ -132,7 +132,7 @@ class UserSettingsResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 用户统计相关
@@ -164,7 +164,7 @@ class UserStatisticsResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 签到相关
@@ -177,7 +177,7 @@ class CheckinResponse(BaseModel):
     next_checkin_time: datetime = Field(..., description="下次签到时间")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "签到成功！连续签到7天",
@@ -197,7 +197,7 @@ class CheckinStatusResponse(BaseModel):
     checkin_rewards: List[Dict[str, Any]] = Field(..., description="签到奖励列表")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "can_checkin": True,
                 "streak_days": 6,
@@ -224,8 +224,8 @@ class ReadingHistoryItem(BaseModel):
     last_read_at: datetime = Field(..., description="最后阅读时间")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "novel_title": "测试小说",
@@ -246,7 +246,7 @@ class ReadingHistoryResponse(BaseModel):
     has_more: bool = Field(..., description="是否有更多")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "items": [],
                 "total": 50,
@@ -263,7 +263,7 @@ class AddReadingHistoryRequest(BaseModel):
     last_position: Optional[str] = Field(None, description="最后阅读位置")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "chapter_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -286,7 +286,7 @@ class RecentlyReadItem(BaseModel):
     last_read_at: datetime = Field(..., description="最后阅读时间")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 数据导入导出
@@ -297,7 +297,7 @@ class DataExportResponse(BaseModel):
     file_size: int = Field(..., description="文件大小(字节)")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "download_url": "https://example.com/export/user_data.zip",
                 "expires_at": "2023-01-02T00:00:00Z",
@@ -312,7 +312,7 @@ class DataImportRequest(BaseModel):
     options: Optional[Dict[str, Any]] = Field(None, description="导入选项")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "data_path": "/tmp/user_data.zip",
                 "options": {
@@ -330,7 +330,7 @@ class DataSyncResponse(BaseModel):
     last_sync_time: datetime = Field(..., description="最后同步时间")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "synced_items": 25,
                 "conflicts": 2,
@@ -346,7 +346,7 @@ class UserSearchRequest(BaseModel):
     type: Optional[str] = Field(None, description="搜索类型")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "keyword": "科幻小说",
                 "type": "favorites"

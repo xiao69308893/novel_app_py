@@ -37,7 +37,7 @@ class AIModelConfig(BaseModel):
     name: str = Field(description="模型名称")
     display_name: str = Field(description="显示名称")
     provider: AIProvider = Field(description="提供商")
-    model_id: str = Field(description="模型ID")
+    models_id: str = Field(description="模型ID")
     version: Optional[str] = Field(default=None, description="模型版本")
 
     # 模型能力
@@ -87,7 +87,7 @@ class AIModelsConfig:
                 name="deepseek-chat",
                 display_name="DeepSeek Chat",
                 provider=AIProvider.DEEPSEEK,
-                model_id="deepseek-chat",
+                models_id="deepseek-chat",
                 capabilities=[
                     AICapability.TRANSLATION,
                     AICapability.OUTLINE_GENERATION,
@@ -111,7 +111,7 @@ class AIModelsConfig:
                 name="glm-4",
                 display_name="智谱 GLM-4",
                 provider=AIProvider.ZHIPU,
-                model_id="glm-4",
+                models_id="glm-4",
                 capabilities=[
                     AICapability.TRANSLATION,
                     AICapability.QUALITY_CHECK,
@@ -132,7 +132,7 @@ class AIModelsConfig:
             name="llama3.1-8b",
             display_name="Llama 3.1 8B",
             provider=AIProvider.OLLAMA,
-            model_id="llama3.1:8b",
+            models_id="llama3.1:8b",
             capabilities=[
                 AICapability.TRANSLATION,
                 AICapability.OUTLINE_GENERATION

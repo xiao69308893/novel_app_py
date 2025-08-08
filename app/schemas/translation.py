@@ -3,8 +3,7 @@
 定义翻译项目、配置、任务等请求和响应的数据结构
 """
 
-from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from pydantic import \1, ConfigDictng import Optional, List, Dict, Any
 from datetime import datetime
 from decimal import Decimal
 import uuid
@@ -17,7 +16,7 @@ class AIModelResponse(BaseModel):
     name: str = Field(..., description="模型名称")
     display_name: str = Field(..., description="显示名称")
     provider: str = Field(..., description="提供商")
-    model_id: str = Field(..., description="模型ID")
+    models_id: str = Field(..., description="模型ID")
     version: Optional[str] = Field(None, description="版本")
     capabilities: List[str] = Field(..., description="模型能力")
     supported_languages: List[str] = Field(..., description="支持的语言")
@@ -29,18 +28,20 @@ class AIModelResponse(BaseModel):
     health_status: str = Field(..., description="健康状态")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 class AIModelTestRequest(BaseModel):
     """AI模型测试请求"""
-    model_id: uuid.UUID = Field(..., description="模型ID")
+    models_id: uuid.UUID = Field(..., description="模型ID")
     test_text: str = Field(..., min_length=1, max_length=1000, description="测试文本")
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
-                "model_id": "123e4567-e89b-12d3-a456-426614174000",
+                "models_id": "123e4567-e89b-12d3-a456-426614174000",
                 "test_text": "Hello, world!"
             }
         }
@@ -55,7 +56,8 @@ class AIModelTestResponse(BaseModel):
     error_message: Optional[str] = Field(None, description="错误信息")
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "response_text": "你好，世界！",
@@ -75,9 +77,9 @@ class TranslationConfigCreateRequest(BaseModel):
     target_language: str = Field(..., description="目标语言")
 
     # AI模型配置
-    outline_model_id: Optional[uuid.UUID] = Field(None, description="大纲模型ID")
-    translation_model_id: Optional[uuid.UUID] = Field(None, description="翻译模型ID")
-    review_model_id: Optional[uuid.UUID] = Field(None, description="审核模型ID")
+    outline_models_id: Optional[uuid.UUID] = Field(None, description="大纲模型ID")
+    translation_models_id: Optional[uuid.UUID] = Field(None, description="翻译模型ID")
+    review_models_id: Optional[uuid.UUID] = Field(None, description="审核模型ID")
 
     # 翻译策略
     translation_strategy: str = Field(default='direct', description="翻译策略")
@@ -135,7 +137,8 @@ class TranslationConfigCreateRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "name": "标准中英翻译",
                 "description": "适用于中文小说翻译成英文的标准配置",
@@ -186,7 +189,8 @@ class TranslationConfigResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 # 翻译项目相关
@@ -218,7 +222,8 @@ class TranslationProjectCreateRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "name": "《修真世界》英文翻译",
                 "description": "将《修真世界》翻译成英文",
@@ -301,7 +306,8 @@ class TranslationProjectResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 class TranslationProjectListResponse(BaseModel):
@@ -311,7 +317,8 @@ class TranslationProjectListResponse(BaseModel):
     has_more: bool = Field(..., description="是否有更多")
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "items": [],
                 "total": 20,
@@ -344,7 +351,8 @@ class TranslationProgressResponse(BaseModel):
     recent_activities: List[Dict[str, Any]] = Field(..., description="最近活动")
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "project_id": "123e4567-e89b-12d3-a456-426614174000",
                 "status": "translating",
@@ -381,7 +389,8 @@ class CharacterMappingCreateRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        protected_namespaces = ()
+        json_schema_extra = {
             "example": {
                 "original_name": "李逍遥",
                 "translated_name": "Li Xiaoyao",
@@ -423,7 +432,8 @@ class CharacterMappingResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 # 翻译任务相关
@@ -462,7 +472,8 @@ class TranslationTaskResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 # 翻译统计响应
@@ -495,7 +506,8 @@ class TranslationStatsResponse(BaseModel):
     retry_count: int = Field(..., description="重试次数")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 # 翻译章节相关
@@ -544,7 +556,8 @@ class TranslatedChapterResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        protected_namespaces = ()
+        from_attributes = True
 
 
 # 章节审核请求
@@ -560,7 +573,7 @@ class ChapterReviewRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "review_status": "approved",
                 "reviewer_notes": "翻译质量良好，通过审核"

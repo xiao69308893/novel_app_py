@@ -23,7 +23,7 @@ class AIModel(BaseModel):
     name = Column(String(100), nullable=False, unique=True, comment="模型名称")
     display_name = Column(String(100), nullable=False, comment="显示名称")
     provider = Column(String(50), nullable=False, comment="提供商")
-    model_id = Column(String(100), nullable=False, comment="模型ID")
+    models_id = Column(String(100), nullable=False, comment="模型ID")
     version = Column(String(50), comment="版本")
 
     # 模型能力
@@ -82,9 +82,9 @@ class TranslationConfig(BaseModel):
     target_language = Column(String(10), nullable=False, default='en-US', comment="目标语言")
 
     # AI模型配置
-    outline_model_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="大纲模型ID")
-    translation_model_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="翻译模型ID")
-    review_model_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="审核模型ID")
+    outline_models_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="大纲模型ID")
+    translation_models_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="翻译模型ID")
+    review_models_id = Column(UUID(as_uuid=True), ForeignKey('ai_models.id'), comment="审核模型ID")
 
     # 翻译策略
     translation_strategy = Column(String(50), default='direct', comment="翻译策略")
@@ -133,9 +133,9 @@ class TranslationConfig(BaseModel):
 
     # 关联关系
     creator = relationship("User")
-    outline_model = relationship("AIModel", foreign_keys=[outline_model_id])
-    translation_model = relationship("AIModel", foreign_keys=[translation_model_id])
-    review_model = relationship("AIModel", foreign_keys=[review_model_id])
+    outline_model = relationship("AIModel", foreign_keys=[outline_models_id])
+    translation_model = relationship("AIModel", foreign_keys=[translation_models_id])
+    review_model = relationship("AIModel", foreign_keys=[review_models_id])
 
 
 class TranslationProject(BaseModel):

@@ -23,8 +23,7 @@ from .novel import (
 from .analytics import (
     UserAnalyticsOverviewResponse, ReadingStatsResponse, ReadingHabitsResponse,
     ReadingPreferencesResponse, NovelStatsResponse, AuthorStatsResponse,
-    CategoryStatsResponse, RevenueStatsResponse, BehaviorAnalysisResponse,
-    ReadingTrendResponse, HotTrendResponse, NovelComparisonResponse,
+    CategoryStatsResponse, RevenueStatsResponse, BehaviorAnalysisResponse, HotTrendResponse, NovelComparisonResponse,
     AuthorComparisonResponse, ReadingHeatmapResponse, ReadingFunnelResponse,
     UserRetentionResponse, UserSegmentResponse, DashboardSummaryResponse,
     AnalyticsRequest, ComparisonRequest

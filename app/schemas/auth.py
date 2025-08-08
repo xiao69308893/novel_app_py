@@ -16,7 +16,7 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=6, max_length=128, description="密码")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "username": "testuser",
                 "password": "password123"
@@ -30,7 +30,7 @@ class PhoneLoginRequest(BaseModel):
     verification_code: str = Field(..., min_length=4, max_length=6, description="验证码")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "phone": "13812345678",
                 "verification_code": "1234"
@@ -53,7 +53,7 @@ class RegisterRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "username": "newuser",
                 "password": "password123",
@@ -73,7 +73,7 @@ class TokenResponse(BaseModel):
     user: 'UserInfo' = Field(..., description="用户信息")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -94,7 +94,7 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str = Field(..., description="刷新token")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
             }
@@ -114,7 +114,7 @@ class PasswordChangeRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "old_password": "oldpassword123",
                 "new_password": "newpassword123"
@@ -129,7 +129,7 @@ class ForgotPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=128, description="新密码")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "account": "user@example.com",
                 "verification_code": "1234",
@@ -151,7 +151,7 @@ class SMSCodeRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "phone": "13812345678",
                 "type": "login"
@@ -171,7 +171,7 @@ class EmailCodeRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "type": "register"
@@ -186,7 +186,7 @@ class VerificationCodeResponse(BaseModel):
     expires_in: int = Field(..., description="过期时间(秒)")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "验证码已发送",
@@ -202,7 +202,7 @@ class BindPhoneRequest(BaseModel):
     verification_code: str = Field(..., min_length=4, max_length=6, description="验证码")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "phone": "13812345678",
                 "verification_code": "1234"
@@ -216,7 +216,7 @@ class BindEmailRequest(BaseModel):
     verification_code: str = Field(..., min_length=4, max_length=6, description="验证码")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "verification_code": "1234"
@@ -241,8 +241,8 @@ class UserInfo(BaseModel):
     created_at: datetime = Field(..., description="注册时间")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "username": "testuser",
@@ -273,8 +273,8 @@ class LoginLogInfo(BaseModel):
     city: Optional[str] = Field(None, description="城市")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "login_type": "password",
@@ -295,7 +295,7 @@ class AuthResponse(BaseModel):
     message: str = Field(..., description="响应消息")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "操作成功"

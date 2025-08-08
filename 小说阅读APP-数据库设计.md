@@ -557,7 +557,7 @@ CREATE TABLE ai_models (
     name VARCHAR(100) NOT NULL UNIQUE,
     display_name VARCHAR(100) NOT NULL,
     provider VARCHAR(50) NOT NULL CHECK (provider IN ('deepseek', 'zhipu', 'ollama')),
-    model_id VARCHAR(100) NOT NULL,
+    models_id VARCHAR(100) NOT NULL,
     version VARCHAR(50),
     
     -- 模型能力
@@ -612,9 +612,9 @@ CREATE TABLE translation_configs (
     target_language VARCHAR(10) NOT NULL DEFAULT 'en-US',
     
     -- AI模型配置
-    outline_model_id UUID REFERENCES ai_models(id),
-    translation_model_id UUID REFERENCES ai_models(id),
-    review_model_id UUID REFERENCES ai_models(id),
+    outline_models_id UUID REFERENCES ai_models(id),
+    translation_models_id UUID REFERENCES ai_models(id),
+    review_models_id UUID REFERENCES ai_models(id),
     
     -- 翻译策略
     translation_strategy VARCHAR(50) DEFAULT 'direct' CHECK (translation_strategy IN ('direct', 'outline_based', 'multi_pass')),
@@ -1192,7 +1192,7 @@ INSERT INTO tags (name, color, description) VALUES
 ('都市', '#13c2c2', '现代都市背景');
 
 -- 插入默认AI模型配置
-INSERT INTO ai_models (name, display_name, provider, model_id, capabilities, supported_languages, max_tokens, cost_per_1k_input_tokens, cost_per_1k_output_tokens, is_default) VALUES
+INSERT INTO ai_models (name, display_name, provider, models_id, capabilities, supported_languages, max_tokens, cost_per_1k_input_tokens, cost_per_1k_output_tokens, is_default) VALUES
 ('deepseek-chat', 'DeepSeek Chat', 'deepseek', 'deepseek-chat', '["translation", "outline_generation", "character_analysis"]', '["zh-CN", "en-US", "ja-JP"]', 4000, 0.0014, 0.0028, true),
 ('glm-4', '智谱 GLM-4', 'zhipu', 'glm-4', '["translation", "quality_check"]', '["zh-CN", "en-US"]', 8000, 0.0050, 0.0150, false),
 ('llama3.1-8b', 'Llama 3.1 8B', 'ollama', 'llama3.1:8b', '["translation", "outline_generation"]', '["zh-CN", "en-US"]', 4096, 0, 0, false);

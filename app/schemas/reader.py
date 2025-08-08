@@ -22,7 +22,7 @@ class ReadingProgressUpdate(BaseModel):
     device_type: Optional[str] = Field(None, description="设备类型")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "chapter_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -59,8 +59,8 @@ class ReadingProgressResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "novel_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -88,7 +88,7 @@ class ReadingProgressSyncRequest(BaseModel):
     sync_timestamp: datetime = Field(..., description="同步时间戳")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "progress_data": [],
                 "device_id": "mobile_001",
@@ -105,7 +105,7 @@ class ReadingProgressSyncResponse(BaseModel):
     last_sync_time: datetime = Field(..., description="最后同步时间")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "synced_count": 5,
                 "failed_count": 0,
@@ -134,7 +134,7 @@ class BookmarkCreateRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "chapter_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -162,7 +162,7 @@ class BookmarkUpdateRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "title": "更新的书签标题",
                 "notes": "更新的备注",
@@ -193,8 +193,8 @@ class BookmarkResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "novel_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -222,7 +222,7 @@ class BookmarkListResponse(BaseModel):
     has_more: bool = Field(..., description="是否有更多")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "items": [],
                 "folders": ["默认书签", "重要章节", "精彩情节"],
@@ -269,7 +269,7 @@ class ReadingSettingsUpdate(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "theme": "dark",
                 "font_size": 18,
@@ -314,7 +314,7 @@ class ReadingSettingsResponse(BaseModel):
     updated_at: datetime = Field(..., description="更新时间")
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 阅读时长相关
@@ -325,7 +325,7 @@ class ReadingTimeUpdate(BaseModel):
     date: Optional[str] = Field(None, description="日期(YYYY-MM-DD)")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "reading_time": 1800,
@@ -371,7 +371,7 @@ class ReadingStatsResponse(BaseModel):
     reading_history_chart: List[Dict[str, Any]] = Field(..., description="阅读历史图表数据")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "today_reading_time": 120,
                 "today_chapters_read": 5,
@@ -405,7 +405,7 @@ class ChapterPurchaseRequest(BaseModel):
     payment_method: Optional[str] = Field(None, description="支付方式")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "novel_id": "123e4567-e89b-12d3-a456-426614174000",
                 "chapter_id": "123e4567-e89b-12d3-a456-426614174001",
@@ -423,7 +423,7 @@ class ChapterPurchaseResponse(BaseModel):
     remaining_coins: int = Field(..., description="剩余金币")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "章节购买成功",
@@ -444,7 +444,7 @@ class ChapterPurchaseStatusResponse(BaseModel):
     user_coins: Optional[int] = Field(None, description="用户金币")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "purchased": False,
                 "can_read": False,
