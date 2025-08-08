@@ -19,9 +19,10 @@ from ..models.comment import Comment, CommentLike
 from ..models.user import User
 from ..schemas.chapter import (
     ChapterDetailResponse, ChapterListResponse, ChapterBasicResponse,
-    BookmarkCreateRequest, BookmarkResponse, CommentCreateRequest,
-    CommentResponse, ReadingProgressUpdate
+    BookmarkCreateRequest, BookmarkResponse, ReadingProgressRequest,
+    ReadingProgressResponse
 )
+from ..schemas.novel import CommentCreateRequest, CommentResponse
 from ..core.exceptions import NotFoundException, BusinessException, PermissionException
 from ..utils.cache import CacheManager
 from .base import BaseService
@@ -294,7 +295,7 @@ class ChapterService(BaseService):
 
     async def update_reading_progress(
             self,
-            progress_data: ReadingProgressUpdate,
+            progress_data: ReadingProgressRequest,
             user_id: uuid.UUID
     ) -> Dict[str, Any]:
         """更新阅读进度"""

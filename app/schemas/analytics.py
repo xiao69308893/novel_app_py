@@ -502,3 +502,37 @@ class ComparisonRequest(BaseModel):
                 "period": "30d"
             }
         }
+
+
+# 阅读趋势响应
+class ReadingTrendResponse(BaseModel):
+    """阅读趋势响应"""
+    period: str = Field(..., description="统计周期")
+    trend_data: List[Dict[str, Any]] = Field(default_factory=list, description="趋势数据")
+    growth_rate: float = Field(default=0.0, description="增长率")
+    peak_time: Optional[str] = Field(None, description="高峰时间")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "period": "30d",
+                "trend_data": [
+                    {"date": "2024-01-01", "value": 120},
+                    {"date": "2024-01-02", "value": 135}
+                ],
+                "growth_rate": 12.5,
+                "peak_time": "20:00"
+            }
+        }
+
+
+# 为API兼容性添加别名
+UserAnalyticsResponse = UserAnalyticsOverviewResponse
+ReadingAnalyticsResponse = ReadingStatsResponse
+NovelAnalyticsResponse = NovelStatsResponse
+AuthorAnalyticsResponse = AuthorStatsResponse
+CategoryAnalyticsResponse = CategoryStatsResponse
+RevenueAnalyticsResponse = RevenueStatsResponse
+BehaviorAnalyticsResponse = BehaviorAnalysisResponse
+TrendAnalyticsResponse = HotTrendResponse
+ComparisonAnalyticsResponse = NovelComparisonResponse

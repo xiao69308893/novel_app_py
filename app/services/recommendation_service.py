@@ -15,8 +15,8 @@ import random
 import json
 
 from ..models.novel import Novel
-from ..models.user import User
-from ..models.chapter import ReadingProgress, UserFavorite
+from ..models.user import User, UserFavorite
+from ..models.chapter import ReadingProgress
 from ..schemas.recommendation import (
     RecommendationResponse, RecommendationReasonResponse,
     UserPreferenceResponse, RecommendationStatsResponse,

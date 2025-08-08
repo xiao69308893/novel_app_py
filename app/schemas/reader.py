@@ -10,6 +10,72 @@ from decimal import Decimal
 import uuid
 
 
+# 阅读器设置相关
+class ReaderSettingsResponse(BaseModel):
+    """阅读器设置响应"""
+    font_family: str = Field(default="system", description="字体")
+    font_size: int = Field(default=16, ge=12, le=24, description="字体大小")
+    line_height: float = Field(default=1.6, ge=1.0, le=3.0, description="行高")
+    background_color: str = Field(default="#ffffff", description="背景色")
+    text_color: str = Field(default="#333333", description="文字颜色")
+    theme: str = Field(default="light", description="主题")
+    page_width: int = Field(default=800, ge=400, le=1200, description="页面宽度")
+    auto_scroll: bool = Field(default=False, description="自动滚动")
+    scroll_speed: int = Field(default=50, ge=10, le=100, description="滚动速度")
+    night_mode: bool = Field(default=False, description="夜间模式")
+    eye_protection: bool = Field(default=False, description="护眼模式")
+    full_screen: bool = Field(default=False, description="全屏模式")
+    
+    class Config:
+        from_attributes = True
+
+
+class ReaderSettingsUpdate(BaseModel):
+    """阅读器设置更新请求"""
+    font_family: Optional[str] = Field(None, description="字体")
+    font_size: Optional[int] = Field(None, ge=12, le=24, description="字体大小")
+    line_height: Optional[float] = Field(None, ge=1.0, le=3.0, description="行高")
+    background_color: Optional[str] = Field(None, description="背景色")
+    text_color: Optional[str] = Field(None, description="文字颜色")
+    theme: Optional[str] = Field(None, description="主题")
+    page_width: Optional[int] = Field(None, ge=400, le=1200, description="页面宽度")
+    auto_scroll: Optional[bool] = Field(None, description="自动滚动")
+    scroll_speed: Optional[int] = Field(None, ge=10, le=100, description="滚动速度")
+    night_mode: Optional[bool] = Field(None, description="夜间模式")
+    eye_protection: Optional[bool] = Field(None, description="护眼模式")
+    full_screen: Optional[bool] = Field(None, description="全屏模式")
+
+
+class ReadingHistoryResponse(BaseModel):
+    """阅读历史响应"""
+    id: uuid.UUID
+    novel_id: uuid.UUID
+    novel_title: str
+    novel_cover: Optional[str] = None
+    chapter_id: uuid.UUID
+    chapter_title: Optional[str] = None
+    chapter_number: int
+    progress: float = Field(ge=0.0, le=1.0)
+    last_read_at: datetime
+    reading_time: int = Field(default=0, description="阅读时长(分钟)")
+    
+    class Config:
+        from_attributes = True
+
+
+class ReadingStatsResponse(BaseModel):
+    """阅读统计响应"""
+    total_reading_time: int = Field(description="总阅读时间(分钟)")
+    books_read: int = Field(description="已读书籍数")
+    chapters_read: int = Field(description="已读章节数")
+    average_reading_speed: float = Field(description="平均阅读速度(字/分钟)")
+    reading_streak: int = Field(description="连续阅读天数")
+    favorite_genre: Optional[str] = Field(None, description="最喜欢的类型")
+    
+    class Config:
+        from_attributes = True
+
+
 # 阅读进度相关
 class ReadingProgressUpdate(BaseModel):
     """阅读进度更新请求"""

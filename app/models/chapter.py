@@ -158,25 +158,3 @@ class Bookmark(BaseModel):
     user = relationship("User", back_populates="bookmarks")
     novel = relationship("Novel")
     chapter = relationship("Chapter", back_populates="bookmarks")
-
-
-class UserFavorite(BaseModel):
-    """用户收藏表"""
-    __tablename__ = "user_favorites"
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'),
-                     nullable=False, comment="用户ID")
-    novel_id = Column(UUID(as_uuid=True), ForeignKey('novels.id', ondelete='CASCADE'),
-                      nullable=False, comment="小说ID")
-
-    # 收藏信息
-    folder_name = Column(String(100), default='默认收藏夹', comment="收藏夹名称")
-    notes = Column(Text, comment="收藏备注")
-    is_public = Column(Boolean, default=False, comment="是否公开")
-
-    # 约束
-    __table_args__ = ()
-
-    # 关联关系
-    user = relationship("User", back_populates="favorites")
-    novel = relationship("Novel", back_populates="favorites")

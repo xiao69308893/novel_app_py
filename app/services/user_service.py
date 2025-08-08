@@ -11,7 +11,8 @@ from decimal import Decimal
 import uuid
 
 from ..models.user import User, UserProfile, UserSettings, UserStatistics
-from ..models.chapter import ReadingProgress, UserFavorite, Bookmark
+from ..models.chapter import ReadingProgress, Bookmark
+from ..models.user import UserFavorite
 from ..schemas.user import (
     UserProfileUpdate, UserProfileResponse, UserSettingsUpdate,
     UserSettingsResponse, UserStatisticsResponse, CheckinResponse,

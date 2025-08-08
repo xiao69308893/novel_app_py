@@ -140,6 +140,55 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+        db: AsyncSession = Depends(get_db),
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False))
+) -> Optional[User]:
+    """
+    获取当前用户（可选，不抛出异常）
+
+    Args:
+        db: 数据库会话
+        credentials: 认证凭据（可选）
+
+    Returns:
+        Optional[User]: 当前用户对象或None
+    """
+    if not credentials:
+        return None
+
+    try:
+        # 解码JWT token
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+
+        # 提取用户ID
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+
+        # 检查token类型
+        token_type: str = payload.get("type")
+        if token_type != "access":
+            return None
+
+        # 查询用户
+        stmt = select(User).where(User.id == user_id)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        if user and user.status == "active":
+            return user
+
+    except JWTError:
+        pass
+
+    return None
+
+
 async def get_current_active_user(
         current_user: User = Depends(get_current_user)
 ) -> User:
@@ -184,6 +233,28 @@ async def get_current_vip_user(
     return current_user
 
 
+async def get_current_admin_user(
+        current_user: User = Depends(get_current_active_user)
+) -> User:
+    """
+    获取当前管理员用户
+
+    Args:
+        current_user: 当前活跃用户
+
+    Returns:
+        User: 管理员用户对象
+
+    Raises:
+        PermissionException: 权限不足
+    """
+
+    if current_user.role != "admin":
+        raise PermissionException("需要管理员权限")
+
+    return current_user
+
+
 def get_pagination_params(
         page: int = Query(1, ge=1, description="页码"),
         page_size: int = Query(20, ge=1, le=100, description="每页数量")
@@ -209,7 +280,7 @@ def get_pagination_params(
 
 def get_sort_params(
         sort_by: str = Query("created_at", description="排序字段"),
-        sort_order: str = Query("desc", regex="^(asc|desc)$", description="排序方向")
+        sort_order: str = Query("desc", pattern="^(asc|desc)$", description="排序方向")
 ) -> dict:
     """
     获取排序参数

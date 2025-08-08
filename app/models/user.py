@@ -204,3 +204,84 @@ class LoginLog(BaseModel):
 
     # 关联关系
     user = relationship("User", back_populates="login_logs")
+
+
+class UserFavorite(BaseModel):
+    """用户收藏表"""
+    __tablename__ = "user_favorites"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, comment="用户ID")
+    novel_id = Column(UUID(as_uuid=True), ForeignKey('novels.id', ondelete='CASCADE'),
+                      nullable=False, comment="小说ID")
+
+    # 收藏信息
+    folder_name = Column(String(100), default='默认收藏夹', comment="收藏夹名称")
+    tags = Column(JSON, default=[], comment="标签")
+    notes = Column(Text, comment="备注")
+
+    # 约束
+    __table_args__ = (
+        {'comment': '用户收藏表'},
+    )
+
+    # 关联关系
+    user = relationship("User", back_populates="favorites")
+    novel = relationship("Novel", back_populates="favorites")
+
+
+class UserBookshelf(BaseModel):
+    """用户书架表"""
+    __tablename__ = "user_bookshelves"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, comment="用户ID")
+    novel_id = Column(UUID(as_uuid=True), ForeignKey('novels.id', ondelete='CASCADE'),
+                      nullable=False, comment="小说ID")
+
+    # 书架信息
+    shelf_type = Column(String(20), default='reading', comment="书架类型")
+    added_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), comment="添加时间")
+    last_read_at = Column(TIMESTAMP(timezone=True), comment="最后阅读时间")
+    reading_progress = Column(DECIMAL(5, 2), default=0.00, comment="阅读进度百分比")
+
+    # 约束
+    __table_args__ = (
+        CheckConstraint("shelf_type IN ('reading', 'finished', 'want_to_read', 'dropped')", 
+                       name='shelf_type_check'),
+        CheckConstraint('reading_progress BETWEEN 0 AND 100', name='reading_progress_check'),
+        {'comment': '用户书架表'},
+    )
+
+    # 关联关系
+    user = relationship("User")
+    novel = relationship("Novel")
+
+
+class ReadingHistory(BaseModel):
+    """阅读历史表"""
+    __tablename__ = "reading_histories"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, comment="用户ID")
+    novel_id = Column(UUID(as_uuid=True), ForeignKey('novels.id', ondelete='CASCADE'),
+                      nullable=False, comment="小说ID")
+    chapter_id = Column(UUID(as_uuid=True), ForeignKey('chapters.id', ondelete='CASCADE'),
+                        nullable=False, comment="章节ID")
+
+    # 阅读信息
+    reading_time = Column(Integer, default=0, comment="阅读时长(秒)")
+    progress = Column(DECIMAL(5, 2), default=0.00, comment="章节阅读进度")
+    device_type = Column(String(20), comment="设备类型")
+
+    # 约束
+    __table_args__ = (
+        CheckConstraint('reading_time >= 0', name='reading_time_check'),
+        CheckConstraint('progress BETWEEN 0 AND 100', name='progress_check'),
+        {'comment': '阅读历史表'},
+    )
+
+    # 关联关系
+    user = relationship("User")
+    novel = relationship("Novel")
+    chapter = relationship("Chapter")

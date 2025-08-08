@@ -14,9 +14,9 @@ from decimal import Decimal
 import uuid
 import json
 
-from ..models.user import User, UserStatistics
+from ..models.user import User, UserStatistics, UserFavorite
 from ..models.novel import Novel
-from ..models.chapter import Chapter, ReadingProgress, UserFavorite, ChapterPurchase
+from ..models.chapter import Chapter, ReadingProgress, ChapterPurchase
 from ..models.comment import Comment
 from ..schemas.analytics import (
     UserAnalyticsOverviewResponse, ReadingStatsResponse, ReadingHabitsResponse,

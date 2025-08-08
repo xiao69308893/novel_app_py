@@ -5,9 +5,9 @@
 """
 
 from .base import Base, BaseModel, TimestampMixin, UUIDMixin
-from .user import User, UserProfile, UserSettings, UserStatistics, LoginLog
+from .user import User, UserProfile, UserSettings, UserStatistics, LoginLog, UserFavorite, UserBookshelf, ReadingHistory
 from .novel import Novel, Category, Tag, NovelTag, Author, NovelRating
-from .chapter import Chapter, ReadingProgress, ChapterPurchase, UserFavorite, Bookmark
+from .chapter import Chapter, ReadingProgress, ChapterPurchase, Bookmark
 from .comment import Comment, CommentLike
 from .translation import (
     AIModel, TranslationConfig, TranslationProject,
@@ -17,10 +17,10 @@ from .translation import (
 
 __all__ = [
     "Base", "BaseModel", "TimestampMixin", "UUIDMixin",
-    "User", "UserProfile", "UserSettings", "UserStatistics", "LoginLog",
+    "User", "UserProfile", "UserSettings", "UserStatistics", "LoginLog", 
+    "UserFavorite", "UserBookshelf", "ReadingHistory",
     "Novel", "Category", "Tag", "NovelTag", "Author", "NovelRating",
-    "Chapter", "ReadingProgress", "ChapterPurchase", "UserFavorite",
-    "Bookmark",
+    "Chapter", "ReadingProgress", "ChapterPurchase", "Bookmark",
     "Comment", "CommentLike",
     "AIModel", "TranslationConfig", "TranslationProject",
     "TranslatedNovel", "TranslatedChapter", "CharacterMapping",

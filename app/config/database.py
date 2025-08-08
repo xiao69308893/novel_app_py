@@ -14,16 +14,27 @@ import logging
 from .settings import settings
 
 # 创建异步数据库引擎
-engine = create_async_engine(
-    url=settings.DATABASE_URL,
-    echo=settings.DATABASE_ECHO,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    pool_timeout=settings.DATABASE_POOL_TIMEOUT,
-    pool_recycle=settings.DATABASE_POOL_RECYCLE,
-    pool_pre_ping=True,  # 连接前检查连接有效性
-    future=True
-)
+if "sqlite" in settings.DATABASE_URL:
+    # SQLite配置
+    engine = create_async_engine(
+        url=settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        poolclass=StaticPool,
+        connect_args={"check_same_thread": False},
+        future=True
+    )
+else:
+    # PostgreSQL配置
+    engine = create_async_engine(
+        url=settings.DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        pool_size=settings.DATABASE_POOL_SIZE,
+        max_overflow=settings.DATABASE_MAX_OVERFLOW,
+        pool_timeout=settings.DATABASE_POOL_TIMEOUT,
+        pool_recycle=settings.DATABASE_POOL_RECYCLE,
+        pool_pre_ping=True,  # 连接前检查连接有效性
+        future=True
+    )
 
 # 创建异步会话工厂
 SessionLocal = async_sessionmaker(

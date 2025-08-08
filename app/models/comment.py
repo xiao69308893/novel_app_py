@@ -87,3 +87,37 @@ class CommentLike(BaseModel):
     # 关联关系
     user = relationship("User")
     comment = relationship("Comment", back_populates="likes")
+
+
+class CommentReport(BaseModel):
+    """评论举报表"""
+    __tablename__ = "comment_reports"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False, comment="举报用户ID")
+    comment_id = Column(UUID(as_uuid=True), ForeignKey('comments.id', ondelete='CASCADE'),
+                        nullable=False, comment="被举报评论ID")
+    
+    # 举报信息
+    reason = Column(String(50), nullable=False, comment="举报原因")
+    description = Column(Text, comment="举报描述")
+    
+    # 处理状态
+    status = Column(String(20), default='pending', comment="处理状态")
+    handled_by = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='SET NULL'),
+                        comment="处理人ID")
+    handled_at = Column(TIMESTAMP(timezone=True), comment="处理时间")
+    handle_result = Column(Text, comment="处理结果")
+
+    # 约束
+    __table_args__ = (
+        CheckConstraint("reason IN ('spam', 'abuse', 'inappropriate', 'copyright', 'other')", 
+                       name='comment_report_reason_check'),
+        CheckConstraint("status IN ('pending', 'processing', 'resolved', 'rejected')", 
+                       name='comment_report_status_check'),
+    )
+
+    # 关联关系
+    user = relationship("User", foreign_keys=[user_id])
+    comment = relationship("Comment")
+    handler = relationship("User", foreign_keys=[handled_by])

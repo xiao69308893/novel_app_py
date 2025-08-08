@@ -7,12 +7,18 @@
 """
 
 import re
-import jieba
 import hashlib
-from typing import List, Dict, Set, Optional, Tuple
+from typing import List, Dict, Set, Optional, Tuple, Any
 from collections import Counter
 import unicodedata
 from loguru import logger
+
+try:
+    import jieba
+    HAS_JIEBA = True
+except ImportError:
+    HAS_JIEBA = False
+    logger.warning("jieba not installed, text segmentation will be limited")
 
 
 class TextProcessor:
@@ -93,7 +99,15 @@ class TextProcessor:
             clean_text = self.clean_text(text)
 
             # 分词
-            words = jieba.lcut(clean_text)
+            if HAS_JIEBA:
+                words = jieba.lcut(clean_text)
+            else:
+                # 简单的字符级分割（适用于中文）
+                words = []
+                for i in range(len(clean_text) - min_length + 1):
+                    word = clean_text[i:i + min_length]
+                    if word.strip():
+                        words.append(word)
 
             # 过滤
             filtered_words = [
@@ -186,8 +200,15 @@ class TextProcessor:
 
         try:
             # 分词
-            words1 = set(jieba.lcut(self.clean_text(text1)))
-            words2 = set(jieba.lcut(self.clean_text(text2)))
+            if HAS_JIEBA:
+                words1 = set(jieba.lcut(self.clean_text(text1)))
+                words2 = set(jieba.lcut(self.clean_text(text2)))
+            else:
+                # 简单的字符级分割
+                clean1 = self.clean_text(text1)
+                clean2 = self.clean_text(text2)
+                words1 = set(clean1[i:i+2] for i in range(len(clean1)-1))
+                words2 = set(clean2[i:i+2] for i in range(len(clean2)-1))
 
             # 去除停用词
             words1 = words1 - self.stop_words

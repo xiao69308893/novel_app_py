@@ -13,7 +13,8 @@ import uuid
 import json
 
 from ..models.novel import Novel, Category, Tag, Author, NovelTag, NovelRating
-from ..models.chapter import Chapter, UserFavorite, ReadingProgress
+from ..models.chapter import Chapter, ReadingProgress
+from ..models.user import UserFavorite
 from ..models.comment import Comment
 from ..schemas.novel import (
     NovelDetailResponse, NovelBasicResponse, NovelListResponse,
@@ -21,7 +22,7 @@ from ..schemas.novel import (
     NovelRatingRequest, CommentCreateRequest, CommentResponse,
     AdjacentChaptersResponse, ChapterDetailResponse, ChapterListResponse
 )
-from ..core.exceptions import NotFoundError, BusinessError, PermissionError
+from ..core.exceptions import NotFoundException, BusinessException, PermissionException
 from ..utils.cache import CacheManager
 from .base import BaseService
 
@@ -57,7 +58,7 @@ class NovelService(BaseService):
         novel = result.scalar_one_or_none()
 
         if not novel:
-            raise NotFoundError("小说不存在")
+            raise NotFoundException("小说不存在")
 
         # 构建响应数据
         response_data = {
@@ -463,7 +464,7 @@ class NovelService(BaseService):
         novel = novel_result.scalar_one_or_none()
 
         if not novel:
-            raise NotFoundError("小说不存在")
+            raise NotFoundException("小说不存在")
 
         # 检查是否已收藏
         existing_query = select(UserFavorite).where(
@@ -476,7 +477,7 @@ class NovelService(BaseService):
         existing_favorite = existing_result.scalar_one_or_none()
 
         if existing_favorite:
-            raise BusinessError("已经收藏过该小说")
+            raise BusinessException("已经收藏过该小说")
 
         # 创建收藏记录
         favorite = UserFavorite(
@@ -514,7 +515,7 @@ class NovelService(BaseService):
         result = await self.db.execute(delete_query)
 
         if result.rowcount == 0:
-            raise NotFoundError("收藏记录不存在")
+            raise NotFoundException("收藏记录不存在")
 
         # 更新小说收藏数
         update_query = update(Novel).where(Novel.id == novel_id).values(
@@ -541,7 +542,7 @@ class NovelService(BaseService):
         novel = novel_result.scalar_one_or_none()
 
         if not novel:
-            raise NotFoundError("小说不存在")
+            raise NotFoundException("小说不存在")
 
         # 检查是否已评分
         existing_query = select(NovelRating).where(

@@ -10,6 +10,54 @@ from decimal import Decimal
 import uuid
 
 
+# 基础用户响应
+class UserResponse(BaseModel):
+    """基础用户响应"""
+    id: uuid.UUID = Field(..., description="用户ID")
+    username: str = Field(..., description="用户名")
+    nickname: Optional[str] = Field(None, description="昵称")
+    avatar_url: Optional[str] = Field(None, description="头像URL")
+    level: int = Field(..., description="用户等级")
+    vip_level: int = Field(..., description="VIP等级")
+    is_active: bool = Field(..., description="是否激活")
+    created_at: datetime = Field(..., description="注册时间")
+
+    class Config:
+        from_attributes = True
+
+
+# 用户更新请求
+class UserUpdateRequest(BaseModel):
+    """用户更新请求"""
+    nickname: Optional[str] = Field(None, max_length=100, description="昵称")
+    avatar_url: Optional[str] = Field(None, max_length=500, description="头像URL")
+    gender: Optional[str] = Field(None, description="性别")
+    birthday: Optional[date] = Field(None, description="生日")
+    bio: Optional[str] = Field(None, max_length=500, description="个人简介")
+    real_name: Optional[str] = Field(None, max_length=100, description="真实姓名")
+    city: Optional[str] = Field(None, max_length=100, description="城市")
+    country: Optional[str] = Field(None, max_length=100, description="国家")
+    website: Optional[str] = Field(None, max_length=500, description="个人网站")
+
+    @validator('gender')
+    def validate_gender(cls, v):
+        if v and v not in ['male', 'female', 'other']:
+            raise ValueError('性别只能是male、female或other')
+        return v
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "nickname": "小说爱好者",
+                "gender": "male",
+                "birthday": "1990-01-01",
+                "bio": "热爱阅读各种类型的小说",
+                "city": "北京",
+                "country": "中国"
+            }
+        }
+
+
 # 用户资料相关
 class UserProfileUpdate(BaseModel):
     """用户资料更新请求"""
@@ -165,6 +213,10 @@ class UserStatisticsResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# 用户统计响应别名
+UserStatsResponse = UserStatisticsResponse
 
 
 # 签到相关

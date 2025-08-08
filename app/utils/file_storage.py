@@ -12,8 +12,14 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 import aiofiles
 from PIL import Image
-import magic
 from loguru import logger
+
+try:
+    import magic
+    HAS_MAGIC = True
+except ImportError:
+    HAS_MAGIC = False
+    logger.warning("python-magic not installed, file type detection will be limited")
 
 from app.config import settings
 from app.core.exceptions import ValidationException
@@ -52,6 +58,19 @@ class FileStorageManager:
 
     def _get_file_mime_type(self, file_path: Path) -> str:
         """获取文件MIME类型"""
+        if not HAS_MAGIC:
+            # 基于文件扩展名的简单MIME类型检测
+            extension = file_path.suffix.lower()
+            mime_types = {
+                '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                '.png': 'image/png', '.gif': 'image/gif',
+                '.webp': 'image/webp', '.bmp': 'image/bmp',
+                '.txt': 'text/plain', '.pdf': 'application/pdf',
+                '.doc': 'application/msword',
+                '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            }
+            return mime_types.get(extension, "application/octet-stream")
+        
         try:
             return magic.from_file(str(file_path), mime=True)
         except Exception:
