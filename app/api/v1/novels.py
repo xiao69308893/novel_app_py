@@ -229,3 +229,104 @@ async def rate_novel(
     )
 
 
+@router.get("/categories", response_model=ListResponse[dict], summary="获取小说分类")
+async def get_categories(
+        novel_service: NovelService = Depends(get_novel_service)
+) -> Any:
+    """获取小说分类列表"""
+
+    categories = await novel_service.get_categories()
+
+    return ListResponse(
+        data=categories,
+        message="获取分类列表成功"
+    )
+
+
+@router.get("/tags", response_model=ListResponse[dict], summary="获取小说标签")
+async def get_tags(
+        novel_service: NovelService = Depends(get_novel_service)
+) -> Any:
+    """获取小说标签列表"""
+
+    tags = await novel_service.get_tags()
+
+    return ListResponse(
+        data=tags,
+        message="获取标签列表成功"
+    )
+
+
+@router.get("/rankings", response_model=ListResponse[NovelBasicResponse], summary="获取小说排行榜")
+async def get_rankings(
+        type: str = Query("hot", description="排行榜类型: hot, new, rating, favorite"),
+        pagination: dict = Depends(get_pagination_params),
+        novel_service: NovelService = Depends(get_novel_service)
+) -> Any:
+    """获取小说排行榜"""
+
+    novels, total = await novel_service.get_rankings(type, **pagination)
+
+    return ListResponse(
+        data=novels,
+        pagination={
+            "page": pagination["page"],
+            "page_size": pagination["page_size"],
+            "total": total,
+            "total_pages": (total + pagination["page_size"] - 1) // pagination["page_size"],
+            "has_more": total > pagination["offset"] + len(novels),
+            "has_next_page": pagination["page"] * pagination["page_size"] < total,
+            "has_previous_page": pagination["page"] > 1
+        },
+        message="获取排行榜成功"
+    )
+
+
+@router.get("/recommendations", response_model=ListResponse[NovelBasicResponse], summary="获取推荐小说")
+async def get_recommendations(
+        pagination: dict = Depends(get_pagination_params),
+        novel_service: NovelService = Depends(get_novel_service)
+) -> Any:
+    """获取推荐小说"""
+
+    novels, total = await novel_service.get_recommendations(**pagination)
+
+    return ListResponse(
+        data=novels,
+        pagination={
+            "page": pagination["page"],
+            "page_size": pagination["page_size"],
+            "total": total,
+            "total_pages": (total + pagination["page_size"] - 1) // pagination["page_size"],
+            "has_more": total > pagination["offset"] + len(novels),
+            "has_next_page": pagination["page"] * pagination["page_size"] < total,
+            "has_previous_page": pagination["page"] > 1
+        },
+        message="获取推荐小说成功"
+    )
+
+
+@router.get("/completed", response_model=ListResponse[NovelBasicResponse], summary="获取完结小说")
+async def get_completed_novels(
+        pagination: dict = Depends(get_pagination_params),
+        novel_service: NovelService = Depends(get_novel_service)
+) -> Any:
+    """获取完结小说"""
+
+    novels, total = await novel_service.get_completed_novels(**pagination)
+
+    return ListResponse(
+        data=novels,
+        pagination={
+            "page": pagination["page"],
+            "page_size": pagination["page_size"],
+            "total": total,
+            "total_pages": (total + pagination["page_size"] - 1) // pagination["page_size"],
+            "has_more": total > pagination["offset"] + len(novels),
+            "has_next_page": pagination["page"] * pagination["page_size"] < total,
+            "has_previous_page": pagination["page"] > 1
+        },
+        message="获取完结小说成功"
+    )
+
+

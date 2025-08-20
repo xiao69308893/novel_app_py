@@ -158,3 +158,142 @@ async def get_checkin_status(
     )
 
 
+@router.get("/favorites", response_model=ListResponse[dict], summary="获取用户收藏")
+async def get_user_favorites(
+        pagination: dict = Depends(get_pagination_params),
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """获取用户收藏列表"""
+
+    favorites, total = await user_service.get_user_favorites(
+        user_id=current_user.id,
+        **pagination
+    )
+
+    return ListResponse(
+        data=favorites,
+        pagination={
+            "page": pagination["page"],
+            "page_size": pagination["page_size"],
+            "total": total,
+            "total_pages": (total + pagination["page_size"] - 1) // pagination["page_size"],
+            "has_more": total > pagination["offset"] + len(favorites),
+            "has_next_page": pagination["page"] * pagination["page_size"] < total,
+            "has_previous_page": pagination["page"] > 1
+        },
+        message="获取收藏列表成功"
+    )
+
+
+@router.post("/favorites", response_model=BaseResponse[dict], summary="添加收藏")
+async def add_favorite(
+        novel_data: dict,
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """添加小说到收藏"""
+
+    result = await user_service.add_favorite(
+        user_id=current_user.id,
+        novel_id=novel_data["novel_id"]
+    )
+
+    return BaseResponse(
+        data=result,
+        message="添加收藏成功"
+    )
+
+
+@router.delete("/favorites/{novel_id}", response_model=BaseResponse[dict], summary="取消收藏")
+async def remove_favorite(
+        novel_id: str,
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """取消收藏小说"""
+
+    result = await user_service.remove_favorite(
+        user_id=current_user.id,
+        novel_id=novel_id
+    )
+
+    return BaseResponse(
+        data=result,
+        message="取消收藏成功"
+    )
+
+
+@router.get("/reading-history", response_model=ListResponse[dict], summary="获取阅读历史")
+async def get_reading_history(
+        pagination: dict = Depends(get_pagination_params),
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """获取用户阅读历史"""
+
+    history, total = await user_service.get_reading_history(
+        user_id=current_user.id,
+        **pagination
+    )
+
+    return ListResponse(
+        data=history,
+        pagination={
+            "page": pagination["page"],
+            "page_size": pagination["page_size"],
+            "total": total,
+            "total_pages": (total + pagination["page_size"] - 1) // pagination["page_size"],
+            "has_more": total > pagination["offset"] + len(history),
+            "has_next_page": pagination["page"] * pagination["page_size"] < total,
+            "has_previous_page": pagination["page"] > 1
+        },
+        message="获取阅读历史成功"
+    )
+
+
+@router.delete("/reading-history/all", response_model=BaseResponse[dict], summary="清空阅读历史")
+async def clear_reading_history(
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """清空用户阅读历史"""
+
+    result = await user_service.clear_reading_history(current_user.id)
+
+    return BaseResponse(
+        data=result,
+        message="清空阅读历史成功"
+    )
+
+
+@router.get("/data/export", response_model=BaseResponse[dict], summary="导出用户数据")
+async def export_user_data(
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """导出用户数据"""
+
+    data = await user_service.export_user_data(current_user.id)
+
+    return BaseResponse(
+        data=data,
+        message="导出用户数据成功"
+    )
+
+
+@router.delete("/account", response_model=BaseResponse[dict], summary="删除账户")
+async def delete_account(
+        current_user: User = Depends(get_current_active_user),
+        user_service: UserService = Depends(get_user_service)
+) -> Any:
+    """删除用户账户"""
+
+    result = await user_service.delete_account(current_user.id)
+
+    return BaseResponse(
+        data=result,
+        message="账户删除成功"
+    )
+
+

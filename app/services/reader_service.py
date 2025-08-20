@@ -21,20 +21,19 @@ from ..schemas.reader import (
     ReadingHistoryResponse, ReadingStatsResponse
 )
 from ..core.exceptions import NotFoundException, BusinessException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class ReaderService(BaseService):
     """阅读器服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_reader_settings(self, user_id: uuid.UUID) -> ReaderSettingsResponse:
         """获取阅读器设置"""
         cache_key = f"reader_settings:{user_id}"
-        cached_settings = await self.cache.get(cache_key)
+        cached_settings = await self.cache_get(cache_key)
         
         if cached_settings:
             return ReaderSettingsResponse(**cached_settings)
@@ -67,7 +66,7 @@ class ReaderService(BaseService):
         )
 
         # 缓存设置
-        await self.cache.set(cache_key, response.dict(), expire=3600)
+        await self.cache_set(cache_key, response.dict(), expire=3600)
         
         return response
 
@@ -99,7 +98,7 @@ class ReaderService(BaseService):
 
         # 清除缓存
         cache_key = f"reader_settings:{user_id}"
-        await self.cache.delete(cache_key)
+        await self.cache_delete(cache_key)
 
         # 返回更新后的设置
         return await self.get_reader_settings(user_id)
@@ -219,7 +218,7 @@ class ReaderService(BaseService):
     async def get_reading_stats(self, user_id: uuid.UUID) -> ReadingStatsResponse:
         """获取阅读统计"""
         cache_key = f"reading_stats:{user_id}"
-        cached_stats = await self.cache.get(cache_key)
+        cached_stats = await self.cache_get(cache_key)
         
         if cached_stats:
             return ReadingStatsResponse(**cached_stats)
@@ -306,7 +305,7 @@ class ReaderService(BaseService):
         )
 
         # 缓存统计数据（缓存时间较短，因为数据变化频繁）
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, response.dict(), expire=300)
         
         return response
 

@@ -20,15 +20,14 @@ from ..schemas.bookshelf import (
     FavoriteResponse, FavoriteCreateRequest, BookshelfNovelResponse
 )
 from ..core.exceptions import NotFoundException, BusinessException, PermissionException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class BookshelfService(BaseService):
     """书架服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_user_bookshelves(
             self,
@@ -37,7 +36,7 @@ class BookshelfService(BaseService):
     ) -> List[BookshelfResponse]:
         """获取用户书架列表"""
         cache_key = f"user_bookshelves:{user_id}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         
         if cached_data:
             return [BookshelfResponse(**item) for item in cached_data]
@@ -74,7 +73,7 @@ class BookshelfService(BaseService):
 
         # 缓存结果
         cache_data = [item.dict() for item in bookshelf_list]
-        await self.cache.set(cache_key, cache_data, expire=1800)
+        await self.cache_set(cache_key, cache_data, expire=1800)
 
         return bookshelf_list
 
@@ -450,7 +449,7 @@ class BookshelfService(BaseService):
     ) -> List[Dict[str, Any]]:
         """获取推荐小说"""
         cache_key = f"user_recommendations:{user_id}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         
         if cached_data:
             return cached_data
@@ -484,7 +483,7 @@ class BookshelfService(BaseService):
             )
 
         # 缓存推荐结果
-        await self.cache.set(cache_key, recommendations, expire=3600)
+        await self.cache_set(cache_key, recommendations, expire=3600)
 
         return recommendations
 
@@ -545,7 +544,7 @@ class BookshelfService(BaseService):
             f"user_recommendations:{user_id}"
         ]
         for key in cache_keys:
-            await self.cache.delete(key)
+            await self.cache_delete(key)
 
     async def _get_popular_novels(self, limit: int) -> List[Dict[str, Any]]:
         """获取热门小说"""
@@ -576,6 +575,334 @@ class BookshelfService(BaseService):
             }
             for novel in novels
         ]
+
+    async def get_user_favorites(
+            self,
+            user_id: uuid.UUID,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[dict], int]:
+        """获取用户收藏列表"""
+        from ..models.novel import Novel
+        
+        # 查询收藏列表
+        order_column = getattr(UserFavorite, sort_by, UserFavorite.created_at)
+        order_func = desc if sort_order == "desc" else asc
+        
+        query = select(UserFavorite, Novel).join(
+            Novel, UserFavorite.novel_id == Novel.id
+        ).where(
+            UserFavorite.user_id == user_id
+        ).order_by(order_func(order_column)).offset(offset).limit(page_size)
+        
+        result = await self.db.execute(query)
+        favorites_data = result.all()
+        
+        # 获取总数
+        count_query = select(func.count(UserFavorite.id)).where(
+            UserFavorite.user_id == user_id
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+        
+        # 构建响应
+        favorites = []
+        for favorite, novel in favorites_data:
+            favorites.append({
+                "id": str(favorite.id),
+                "novel_id": str(novel.id),
+                "title": novel.title,
+                "cover_url": novel.cover_url,
+                "author_name": novel.author.name if novel.author else "",
+                "category_name": novel.category.name if novel.category else "",
+                "status": novel.status,
+                "word_count": novel.word_count,
+                "chapter_count": novel.chapter_count,
+                "rating": novel.rating,
+                "created_at": favorite.created_at,
+                "folder_name": favorite.folder_name
+            })
+        
+        return favorites, total
+
+    async def get_reading_history(
+            self,
+            user_id: uuid.UUID,
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[dict], int]:
+        """获取阅读历史"""
+        from ..models.novel import Novel
+        from ..models.chapter import Chapter
+        
+        # 查询阅读历史
+        query = select(ReadingHistory, Novel, Chapter).join(
+            Novel, ReadingHistory.novel_id == Novel.id
+        ).join(
+            Chapter, ReadingHistory.chapter_id == Chapter.id
+        ).where(
+            ReadingHistory.user_id == user_id
+        ).order_by(ReadingHistory.updated_at.desc()).offset(offset).limit(page_size)
+        
+        result = await self.db.execute(query)
+        history_data = result.all()
+        
+        # 获取总数
+        count_query = select(func.count(ReadingHistory.id)).where(
+            ReadingHistory.user_id == user_id
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+        
+        # 构建响应
+        history = []
+        for reading_history, novel, chapter in history_data:
+            history.append({
+                "id": str(reading_history.id),
+                "novel_id": str(novel.id),
+                "novel_title": novel.title,
+                "novel_cover_url": novel.cover_url,
+                "chapter_id": str(chapter.id),
+                "chapter_title": chapter.title,
+                "chapter_number": chapter.chapter_number,
+                "reading_progress": reading_history.reading_progress,
+                "reading_time": reading_history.reading_time,
+                "last_read_at": reading_history.updated_at
+            })
+        
+        return history, total
+
+    async def get_recently_read(
+            self,
+            user_id: uuid.UUID,
+            limit: int = 10
+    ) -> List[dict]:
+        """获取最近阅读的小说"""
+        from ..models.novel import Novel
+        from ..models.chapter import Chapter
+        
+        # 查询最近阅读
+        query = select(ReadingHistory, Novel, Chapter).join(
+            Novel, ReadingHistory.novel_id == Novel.id
+        ).join(
+            Chapter, ReadingHistory.chapter_id == Chapter.id
+        ).where(
+            ReadingHistory.user_id == user_id
+        ).order_by(ReadingHistory.updated_at.desc()).limit(limit)
+        
+        result = await self.db.execute(query)
+        recent_data = result.all()
+        
+        # 构建响应
+        recent_novels = []
+        for reading_history, novel, chapter in recent_data:
+            recent_novels.append({
+                "novel_id": str(novel.id),
+                "novel_title": novel.title,
+                "novel_cover_url": novel.cover_url,
+                "chapter_id": str(chapter.id),
+                "chapter_title": chapter.title,
+                "chapter_number": chapter.chapter_number,
+                "reading_progress": reading_history.reading_progress,
+                "last_read_at": reading_history.updated_at
+            })
+        
+        return recent_novels
+
+    async def clear_reading_history(
+            self,
+            user_id: uuid.UUID,
+            novel_ids: Optional[List[str]] = None
+    ) -> dict:
+        """清理阅读历史"""
+        if novel_ids:
+            # 删除指定小说的阅读历史
+            novel_uuids = [uuid.UUID(novel_id) for novel_id in novel_ids]
+            await self.db.execute(
+                delete(ReadingHistory).where(
+                    and_(
+                        ReadingHistory.user_id == user_id,
+                        ReadingHistory.novel_id.in_(novel_uuids)
+                    )
+                )
+            )
+        else:
+            # 删除所有阅读历史
+            await self.db.execute(
+                delete(ReadingHistory).where(ReadingHistory.user_id == user_id)
+            )
+        
+        await self.db.commit()
+        
+        return {
+            "user_id": str(user_id),
+            "message": "阅读历史清理成功"
+        }
+
+    async def add_to_favorites(
+            self,
+            user_id: uuid.UUID,
+            novel_id: str,
+            folder_name: str = "默认收藏夹"
+    ) -> dict:
+        """添加到收藏"""
+        novel_uuid = uuid.UUID(novel_id)
+        
+        # 检查是否已收藏
+        existing_query = select(UserFavorite).where(
+            and_(
+                UserFavorite.user_id == user_id,
+                UserFavorite.novel_id == novel_uuid
+            )
+        )
+        result = await self.db.execute(existing_query)
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            raise BusinessException("已经收藏过该小说")
+        
+        # 创建收藏记录
+        favorite = UserFavorite(
+            user_id=user_id,
+            novel_id=novel_uuid,
+            folder_name=folder_name
+        )
+        self.db.add(favorite)
+        await self.db.commit()
+        
+        return {
+            "id": str(favorite.id),
+            "novel_id": novel_id,
+            "folder_name": folder_name,
+            "message": "添加到收藏成功"
+        }
+
+    async def remove_from_favorites(
+            self,
+            user_id: uuid.UUID,
+            novel_id: str
+    ) -> dict:
+        """从收藏中移除"""
+        novel_uuid = uuid.UUID(novel_id)
+        
+        # 查找收藏记录
+        query = select(UserFavorite).where(
+            and_(
+                UserFavorite.user_id == user_id,
+                UserFavorite.novel_id == novel_uuid
+            )
+        )
+        result = await self.db.execute(query)
+        favorite = result.scalar_one_or_none()
+        
+        if not favorite:
+            raise NotFoundException("收藏记录不存在")
+        
+        # 删除收藏记录
+        await self.db.delete(favorite)
+        await self.db.commit()
+        
+        return {
+            "novel_id": novel_id,
+            "message": "从收藏中移除成功"
+        }
+
+    async def sync_bookshelf(
+            self,
+            user_id: uuid.UUID,
+            sync_data: dict
+    ) -> dict:
+        """同步书架数据"""
+        # 这里可以实现书架数据同步逻辑
+        # 比如从客户端同步收藏、阅读进度等数据
+        
+        # 清除缓存
+        await self._clear_user_bookshelf_cache(user_id)
+        
+        return {
+            "user_id": str(user_id),
+            "message": "书架同步成功"
+        }
+
+    async def sort_bookshelf(
+            self,
+            user_id: uuid.UUID,
+            sort_data: dict
+    ) -> dict:
+        """书架排序"""
+        # 这里可以实现书架排序逻辑
+        # 比如更新收藏的排序顺序
+        
+        # 清除缓存
+        await self._clear_user_bookshelf_cache(user_id)
+        
+        return {
+            "user_id": str(user_id),
+            "message": "书架排序成功"
+        }
+
+    async def get_bookshelf(
+            self,
+            user_id: uuid.UUID,
+            folder_name: Optional[str] = None,
+            sort_by: str = "created_at",
+            sort_order: str = "desc",
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[dict], int]:
+        """获取书架内容"""
+        from ..models.novel import Novel
+        
+        # 构建查询条件
+        conditions = [UserFavorite.user_id == user_id]
+        if folder_name:
+            conditions.append(UserFavorite.folder_name == folder_name)
+        
+        # 排序
+        order_column = getattr(UserFavorite, sort_by, UserFavorite.created_at)
+        order_func = desc if sort_order == "desc" else asc
+        
+        # 查询书架内容
+        query = select(UserFavorite, Novel).join(
+            Novel, UserFavorite.novel_id == Novel.id
+        ).where(
+            and_(*conditions)
+        ).order_by(order_func(order_column)).offset(offset).limit(page_size)
+        
+        result = await self.db.execute(query)
+        bookshelf_data = result.all()
+        
+        # 获取总数
+        count_query = select(func.count(UserFavorite.id)).where(
+            and_(*conditions)
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+        
+        # 构建响应
+        novels = []
+        for favorite, novel in bookshelf_data:
+            novels.append({
+                "id": str(favorite.id),
+                "novel_id": str(novel.id),
+                "title": novel.title,
+                "cover_url": novel.cover_url,
+                "author_name": novel.author.name if novel.author else "",
+                "category_name": novel.category.name if novel.category else "",
+                "status": novel.status,
+                "word_count": novel.word_count,
+                "chapter_count": novel.chapter_count,
+                "rating": novel.rating,
+                "folder_name": favorite.folder_name,
+                "created_at": favorite.created_at
+            })
+        
+        return novels, total
 
     async def _get_category_recommendations(
             self,

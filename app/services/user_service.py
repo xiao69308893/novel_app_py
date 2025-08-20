@@ -19,20 +19,19 @@ from ..schemas.user import (
     CheckinStatusResponse, ReadingHistoryItem, AddReadingHistoryRequest
 )
 from ..core.exceptions import NotFoundException, BusinessException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class UserService(BaseService):
     """用户服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_user_profile(self, user_id: uuid.UUID) -> UserProfileResponse:
         """获取用户资料"""
         cache_key = f"user_profile:{user_id}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return UserProfileResponse.parse_obj(cached_data)
 
@@ -84,7 +83,7 @@ class UserService(BaseService):
         response = UserProfileResponse(**profile_data)
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, str(response.dict()), ttl=300)
 
         return response
 
@@ -149,14 +148,14 @@ class UserService(BaseService):
 
         # 清除缓存
         cache_key = f"user_profile:{user_id}"
-        await self.cache.delete(cache_key)
+        await self.cache_delete(cache_key)
 
         return await self.get_user_profile(user_id)
 
     async def get_user_settings(self, user_id: uuid.UUID) -> UserSettingsResponse:
         """获取用户设置"""
         cache_key = f"user_settings:{user_id}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return UserSettingsResponse.parse_obj(cached_data)
 
@@ -173,7 +172,7 @@ class UserService(BaseService):
         response = UserSettingsResponse.from_orm(settings)
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, response.dict(), expire=300)
 
         return response
 
@@ -215,14 +214,14 @@ class UserService(BaseService):
 
             # 清除缓存
             cache_key = f"user_settings:{user_id}"
-            await self.cache.delete(cache_key)
+            await self.cache_delete(cache_key)
 
         return await self.get_user_settings(user_id)
 
     async def get_user_statistics(self, user_id: uuid.UUID) -> UserStatisticsResponse:
         """获取用户统计信息"""
         cache_key = f"user_stats:{user_id}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return UserStatisticsResponse.parse_obj(cached_data)
 
@@ -239,7 +238,7 @@ class UserService(BaseService):
         response = UserStatisticsResponse.from_orm(stats)
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=60)
+        await self.cache_set(cache_key, response.dict(), expire=60)
 
         return response
 
@@ -249,7 +248,7 @@ class UserService(BaseService):
         cache_key = f"user_checkin:{user_id}:{today}"
 
         # 检查今日是否已签到
-        if await self.cache.exists(cache_key):
+        if await self.cache_exists(cache_key):
             raise BusinessException("今日已签到")
 
         # 获取用户统计信息
@@ -292,11 +291,11 @@ class UserService(BaseService):
         await self.db.commit()
 
         # 设置签到缓存（24小时）
-        await self.cache.set(cache_key, True, expire=86400)
+        await self.cache_set(cache_key, True, expire=86400)
 
         # 清除相关缓存
-        await self.cache.delete(f"user_stats:{user_id}")
-        await self.cache.delete(f"user_profile:{user_id}")
+        await self.cache_delete(f"user_stats:{user_id}")
+        await self.cache_delete(f"user_profile:{user_id}")
 
         # 计算下次签到时间
         next_checkin_time = datetime.combine(today + timedelta(days=1), datetime.min.time())
@@ -313,7 +312,7 @@ class UserService(BaseService):
         """获取签到状态"""
         today = date.today()
         cache_key = f"user_checkin:{user_id}:{today}"
-        can_checkin = not await self.cache.exists(cache_key)
+        can_checkin = not await self.cache_exists(cache_key)
 
         # 获取用户统计信息
         stats_query = select(UserStatistics).where(UserStatistics.user_id == user_id)
@@ -401,7 +400,7 @@ class UserService(BaseService):
         await self.db.commit()
 
         # 清除相关缓存
-        await self.cache.delete(f"user_stats:{user_id}")
+        await self.cache_delete(f"user_stats:{user_id}")
 
     async def get_reading_history(
             self,
@@ -495,7 +494,219 @@ class UserService(BaseService):
         await self.db.commit()
 
         # 清除缓存
-        await self.cache.delete(f"user_profile:{user_id}")
+        await self.cache_delete(f"user_profile:{user_id}")
+
+    async def get_user_favorites(
+            self,
+            user_id: uuid.UUID,
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> tuple[List[dict], int]:
+        """获取用户收藏列表"""
+        from ..models.novel import Novel
+        
+        # 查询收藏列表
+        query = select(UserFavorite, Novel).join(
+            Novel, UserFavorite.novel_id == Novel.id
+        ).where(
+            UserFavorite.user_id == user_id
+        ).order_by(UserFavorite.created_at.desc()).offset(offset).limit(page_size)
+        
+        result = await self.db.execute(query)
+        favorites_data = result.all()
+        
+        # 获取总数
+        count_query = select(func.count(UserFavorite.id)).where(
+            UserFavorite.user_id == user_id
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+        
+        # 构建响应
+        favorites = []
+        for favorite, novel in favorites_data:
+            favorites.append({
+                "id": str(favorite.id),
+                "novel_id": str(novel.id),
+                "title": novel.title,
+                "cover_url": novel.cover_url,
+                "author_name": novel.author.name if novel.author else "",
+                "category_name": novel.category.name if novel.category else "",
+                "status": novel.status,
+                "word_count": novel.word_count,
+                "chapter_count": novel.chapter_count,
+                "rating": novel.rating,
+                "created_at": favorite.created_at,
+                "folder_name": favorite.folder_name
+            })
+        
+        return favorites, total
+
+    async def add_favorite(
+            self,
+            user_id: uuid.UUID,
+            novel_id: str,
+            folder_name: str = "默认收藏夹"
+    ) -> dict:
+        """添加收藏"""
+        novel_uuid = uuid.UUID(novel_id)
+        
+        # 检查是否已收藏
+        existing_query = select(UserFavorite).where(
+            and_(
+                UserFavorite.user_id == user_id,
+                UserFavorite.novel_id == novel_uuid
+            )
+        )
+        result = await self.db.execute(existing_query)
+        existing = result.scalar_one_or_none()
+        
+        if existing:
+            raise BusinessException("已经收藏过该小说")
+        
+        # 创建收藏记录
+        favorite = UserFavorite(
+            user_id=user_id,
+            novel_id=novel_uuid,
+            folder_name=folder_name
+        )
+        self.db.add(favorite)
+        await self.db.commit()
+        
+        return {
+            "id": str(favorite.id),
+            "novel_id": novel_id,
+            "folder_name": folder_name,
+            "created_at": favorite.created_at
+        }
+
+    async def remove_favorite(
+            self,
+            user_id: uuid.UUID,
+            novel_id: str
+    ) -> dict:
+        """取消收藏"""
+        novel_uuid = uuid.UUID(novel_id)
+        
+        # 查找收藏记录
+        query = select(UserFavorite).where(
+            and_(
+                UserFavorite.user_id == user_id,
+                UserFavorite.novel_id == novel_uuid
+            )
+        )
+        result = await self.db.execute(query)
+        favorite = result.scalar_one_or_none()
+        
+        if not favorite:
+            raise NotFoundException("收藏记录不存在")
+        
+        # 删除收藏记录
+        await self.db.delete(favorite)
+        await self.db.commit()
+        
+        return {
+            "novel_id": novel_id,
+            "message": "取消收藏成功"
+        }
+
+    async def export_user_data(self, user_id: uuid.UUID) -> dict:
+        """导出用户数据"""
+        # 获取用户基本信息
+        user_query = select(User).where(User.id == user_id)
+        user_result = await self.db.execute(user_query)
+        user = user_result.scalar_one_or_none()
+        
+        if not user:
+            raise NotFoundException("用户不存在")
+        
+        # 获取用户资料
+        profile = await self.get_user_profile(user_id)
+        
+        # 获取用户设置
+        settings = await self.get_user_settings(user_id)
+        
+        # 获取用户统计
+        stats = await self.get_user_statistics(user_id)
+        
+        # 获取收藏列表
+        favorites, _ = await self.get_user_favorites(user_id, page_size=1000)
+        
+        # 获取阅读历史
+        history = await self.get_reading_history(user_id, limit=1000)
+        
+        return {
+            "user_info": {
+                "id": str(user.id),
+                "username": user.username,
+                "email": user.email,
+                "phone": user.phone,
+                "created_at": user.created_at,
+                "last_login_at": user.last_login_at
+            },
+            "profile": profile.dict() if profile else None,
+            "settings": settings.dict() if settings else None,
+            "statistics": stats.dict() if stats else None,
+            "favorites": favorites,
+            "reading_history": history.get("items", []),
+            "export_time": datetime.utcnow()
+        }
+
+    async def delete_account(self, user_id: uuid.UUID) -> dict:
+        """删除用户账户"""
+        # 查找用户
+        user_query = select(User).where(User.id == user_id)
+        user_result = await self.db.execute(user_query)
+        user = user_result.scalar_one_or_none()
+        
+        if not user:
+            raise NotFoundException("用户不存在")
+        
+        # 删除相关数据
+        # 删除收藏
+        await self.db.execute(
+            delete(UserFavorite).where(UserFavorite.user_id == user_id)
+        )
+        
+        # 删除阅读进度
+        await self.db.execute(
+            delete(ReadingProgress).where(ReadingProgress.user_id == user_id)
+        )
+        
+        # 删除书签
+        await self.db.execute(
+            delete(Bookmark).where(Bookmark.user_id == user_id)
+        )
+        
+        # 删除用户统计
+        await self.db.execute(
+            delete(UserStatistics).where(UserStatistics.user_id == user_id)
+        )
+        
+        # 删除用户设置
+        await self.db.execute(
+            delete(UserSettings).where(UserSettings.user_id == user_id)
+        )
+        
+        # 删除用户资料
+        await self.db.execute(
+            delete(UserProfile).where(UserProfile.user_id == user_id)
+        )
+        
+        # 最后删除用户
+        await self.db.delete(user)
+        await self.db.commit()
+        
+        # 清除缓存
+        await self.cache_delete(f"user_profile:{user_id}")
+        await self.cache_delete(f"user_settings:{user_id}")
+        await self.cache_delete(f"user_stats:{user_id}")
+        
+        return {
+            "user_id": str(user_id),
+            "message": "账户删除成功"
+        }
 
     async def update_user_points(
             self,

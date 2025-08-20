@@ -21,17 +21,15 @@ from ..schemas.comment import (
     CommentListResponse, CommentReplyResponse
 )
 from ..core.exceptions import NotFoundException, BusinessException, PermissionException
-from ..utils.cache import CacheManager
-from ..utils.content_filter import ContentFilter
 from .base import BaseService
 
 
 class CommentService(BaseService):
     """评论服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
-        self.content_filter = ContentFilter()
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
+
 
     async def create_comment(
             self,
@@ -493,4 +491,4 @@ class CommentService(BaseService):
             f"comment_count:{target_type}:{target_id}"
         ]
         for pattern in cache_keys:
-            await self.cache.delete_pattern(pattern)
+            await self.cache_delete_pattern(pattern)

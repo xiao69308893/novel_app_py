@@ -20,23 +20,20 @@ from ..models.comment import Comment
 from ..schemas.admin import (
     SystemStatsResponse, UserStatsResponse, NovelStatsResponse,
     RevenueStatsResponse, AdminLogResponse, AdminUserResponse,
-    AdminUserCreate, AdminUserUpdate
-)
-from ..utils.cache import CacheManager
-from ..utils.statistics import StatisticsManager
+    AdminUserCreate, AdminUserUpdate)
 from .base import BaseService
 
 
 class AdminService(BaseService):
     """管理员服务类"""
 
-    def __init__(self, db: AsyncSession, cache: Optional[CacheManager] = None):
-        super().__init__(db, cache)
-        self.stats_manager = StatisticsManager()
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
+
 
     async def get_system_stats(self) -> SystemStatsResponse:
         """获取系统统计信息"""
-        
+
         # 获取用户统计
         user_count_query = select(func.count()).select_from(User)
         user_count = await self.db.execute(user_count_query)
@@ -81,7 +78,7 @@ class AdminService(BaseService):
 
     async def get_user_stats(self, period: str = "7d") -> UserStatsResponse:
         """获取用户统计信息"""
-        
+
         # 解析时间周期
         if period == "7d":
             start_date = datetime.now() - timedelta(days=7)
@@ -103,7 +100,7 @@ class AdminService(BaseService):
         ).order_by(
             func.date(User.created_at)
         )
-        
+
         new_users_result = await self.db.execute(new_users_query)
         new_users_trend = [
             {"date": str(row.date), "count": row.count}
@@ -125,7 +122,7 @@ class AdminService(BaseService):
 
     async def get_novel_stats(self, period: str = "7d") -> NovelStatsResponse:
         """获取小说统计信息"""
-        
+
         # 解析时间周期
         if period == "7d":
             start_date = datetime.now() - timedelta(days=7)
@@ -147,7 +144,7 @@ class AdminService(BaseService):
         ).order_by(
             func.date(Novel.created_at)
         )
-        
+
         new_novels_result = await self.db.execute(new_novels_query)
         new_novels_trend = [
             {"date": str(row.date), "count": row.count}
@@ -163,7 +160,7 @@ class AdminService(BaseService):
         ).order_by(
             desc(func.count())
         )
-        
+
         category_result = await self.db.execute(category_query)
         category_stats = [
             {"category": row.category, "count": row.count}
@@ -178,7 +175,7 @@ class AdminService(BaseService):
 
     async def get_revenue_stats(self, period: str = "7d") -> RevenueStatsResponse:
         """获取收入统计信息"""
-        
+
         # 解析时间周期
         if period == "7d":
             start_date = datetime.now() - timedelta(days=7)
@@ -200,7 +197,7 @@ class AdminService(BaseService):
         ).order_by(
             func.date(ChapterPurchase.created_at)
         )
-        
+
         revenue_result = await self.db.execute(revenue_query)
         revenue_trend = [
             {"date": str(row.date), "amount": float(row.amount or 0)}
@@ -228,7 +225,7 @@ class AdminService(BaseService):
         admin_id: Optional[uuid.UUID] = None
     ) -> None:
         """更新用户状态"""
-        
+
         # 更新用户状态
         update_query = update(User).where(
             User.id == uuid.UUID(user_id)
@@ -236,7 +233,7 @@ class AdminService(BaseService):
             status=status,
             updated_at=datetime.utcnow()
         )
-        
+
         await self.db.execute(update_query)
         await self.db.commit()
 
@@ -245,7 +242,7 @@ class AdminService(BaseService):
 
     async def delete_user(self, user_id: str, admin_id: uuid.UUID) -> None:
         """删除用户"""
-        
+
         # 软删除用户
         update_query = update(User).where(
             User.id == uuid.UUID(user_id)
@@ -254,7 +251,7 @@ class AdminService(BaseService):
             deleted_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        
+
         await self.db.execute(update_query)
         await self.db.commit()
 
@@ -267,14 +264,14 @@ class AdminService(BaseService):
         page_size: int = 20
     ) -> Tuple[List[AdminUserResponse], int]:
         """获取管理员用户列表"""
-        
+
         offset = (page - 1) * page_size
-        
+
         # 查询管理员用户
         query = select(User).where(
             User.role.in_(["admin", "super_admin"])
         ).order_by(desc(User.created_at))
-        
+
         # 获取总数
         count_query = select(func.count()).select_from(User).where(
             User.role.in_(["admin", "super_admin"])
@@ -309,7 +306,7 @@ class AdminService(BaseService):
         creator_id: uuid.UUID
     ) -> AdminUserResponse:
         """创建管理员用户"""
-        
+
         # 检查用户名和邮箱是否已存在
         existing_user_query = select(User).where(
             or_(
@@ -323,7 +320,7 @@ class AdminService(BaseService):
 
         # 创建新管理员用户
         from ..utils.security import hash_password
-        
+
         new_user = User(
             username=admin_data.username,
             email=admin_data.email,
@@ -332,7 +329,7 @@ class AdminService(BaseService):
             status="active",
             created_at=datetime.utcnow()
         )
-        
+
         self.db.add(new_user)
         await self.db.commit()
         await self.db.refresh(new_user)
@@ -354,12 +351,12 @@ class AdminService(BaseService):
         updater_id: uuid.UUID
     ) -> AdminUserResponse:
         """更新管理员用户"""
-        
+
         # 获取用户
         user_query = select(User).where(User.id == uuid.UUID(user_id))
         user_result = await self.db.execute(user_query)
         user = user_result.scalar_one_or_none()
-        
+
         if not user:
             raise ValueError("用户不存在")
 
@@ -368,13 +365,13 @@ class AdminService(BaseService):
         if "password" in update_data:
             from ..utils.security import hash_password
             update_data["password_hash"] = hash_password(update_data.pop("password"))
-        
+
         update_data["updated_at"] = datetime.utcnow()
-        
+
         update_query = update(User).where(
             User.id == uuid.UUID(user_id)
         ).values(**update_data)
-        
+
         await self.db.execute(update_query)
         await self.db.commit()
 
@@ -394,7 +391,7 @@ class AdminService(BaseService):
 
     async def delete_admin_user(self, user_id: str, deleter_id: uuid.UUID) -> None:
         """删除管理员用户"""
-        
+
         # 软删除用户
         update_query = update(User).where(
             User.id == uuid.UUID(user_id)
@@ -403,6 +400,6 @@ class AdminService(BaseService):
             deleted_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        
+
         await self.db.execute(update_query)
         await self.db.commit()

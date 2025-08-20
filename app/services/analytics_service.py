@@ -9,12 +9,10 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta, date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_, or_, func, desc, asc, text
-from sqlalchemy.orm import selectinload, joinedload
-from decimal import Decimal
-import uuid
-import json
 
-from ..models.user import User, UserStatistics, UserFavorite
+import uuid
+
+from ..models.user import User, UserFavorite
 from ..models.novel import Novel
 from ..models.chapter import Chapter, ReadingProgress, ChapterPurchase
 from ..models.comment import Comment
@@ -26,17 +24,14 @@ from ..schemas.analytics import (
     AuthorComparisonResponse, ReadingHeatmapResponse, ReadingFunnelResponse,
     UserRetentionResponse, UserSegmentResponse, DashboardSummaryResponse
 )
-from ..utils.cache import CacheManager
-from ..utils.statistics import StatisticsManager
 from .base import BaseService
 
 
 class AnalyticsService(BaseService):
     """数据分析服务类"""
 
-    def __init__(self, db: AsyncSession, cache: Optional[CacheManager] = None):
-        super().__init__(db, cache)
-        self.stats_manager = StatisticsManager()
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_user_analytics_overview(
         self,

@@ -31,7 +31,7 @@ api_router.include_router(
 
 api_router.include_router(
     users_router,
-    prefix="/users",
+    prefix="/user",
     tags=["用户"]
 )
 
@@ -59,38 +59,38 @@ api_router.include_router(
     tags=["阅读器"]
 )
 
-api_router.include_router(
-    translation_router,
-    prefix="/translation",
-    tags=["翻译"]
-)
-
-api_router.include_router(
-    admin_router,
-    prefix="/admin",
-    tags=["管理员"]
-)
-
-api_router.include_router(
-    comments_router,
-    prefix="/comments",
-    tags=["评论"]
-)
-
-api_router.include_router(
-    search_router,
-    prefix="/search",
-    tags=["搜索"]
-)
-
-api_router.include_router(
-    recommendations_router,
-    prefix="/recommendations",
-    tags=["推荐"]
-)
-
-api_router.include_router(
-    analytics_router,
-    prefix="/analytics",
-    tags=["数据分析"]
-)
+# api_router.include_router(
+#     translation_router,
+#     prefix="/translation",
+#     tags=["翻译"]
+# )
+#
+# api_router.include_router(
+#     admin_router,
+#     prefix="/admin",
+#     tags=["管理员"]
+# )
+#
+# api_router.include_router(
+#     comments_router,
+#     prefix="/comments",
+#     tags=["评论"]
+# )
+#
+# api_router.include_router(
+#     search_router,
+#     prefix="/search",
+#     tags=["搜索"]
+# )
+#
+# api_router.include_router(
+#     recommendations_router,
+#     prefix="/recommendations",
+#     tags=["推荐"]
+# )
+#
+# api_router.include_router(
+#     analytics_router,
+#     prefix="/analytics",
+#     tags=["数据分析"]
+# )

@@ -97,7 +97,7 @@ async def register(
     )
 
 
-@router.post("/refresh", response_model=BaseResponse[TokenResponse], summary="刷新Token")
+@router.post("/token/refresh", response_model=BaseResponse[TokenResponse], summary="刷新Token")
 async def refresh_token(
         refresh_token: str,
         auth_service: AuthService = Depends(get_auth_service)
@@ -142,16 +142,15 @@ async def get_current_user_info(
     )
 
 
-@router.put("/password/change", response_model=SuccessResponse, summary="修改密码")
+@router.put("/change-password", response_model=SuccessResponse, summary="修改密码")
 async def change_password(
         password_data: PasswordChangeRequest,
         current_user: User = Depends(get_current_active_user),
         auth_service: AuthService = Depends(get_auth_service)
 ) -> Any:
     """
-    修改用户密码
+    修改密码
     """
-
     await auth_service.change_password(
         user_id=current_user.id,
         old_password=password_data.old_password,
@@ -161,7 +160,25 @@ async def change_password(
     return SuccessResponse(message="密码修改成功")
 
 
-@router.post("/password/forgot", response_model=SuccessResponse, summary="忘记密码")
+@router.put("/password/change", response_model=SuccessResponse, summary="修改密码（兼容路径）")
+async def change_password_compat(
+        password_data: PasswordChangeRequest,
+        current_user: User = Depends(get_current_active_user),
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    修改密码（兼容路径）
+    """
+    await auth_service.change_password(
+        user_id=current_user.id,
+        old_password=password_data.old_password,
+        new_password=password_data.new_password
+    )
+    
+    return SuccessResponse(message="密码修改成功")
+
+
+@router.post("/forgot-password", response_model=SuccessResponse, summary="忘记密码")
 async def forgot_password(
         account: str,
         verification_code: str,
@@ -169,15 +186,33 @@ async def forgot_password(
         auth_service: AuthService = Depends(get_auth_service)
 ) -> Any:
     """
-    忘记密码重置
+    忘记密码
     """
-
     await auth_service.reset_password(
         account=account,
         verification_code=verification_code,
         new_password=new_password
     )
 
+    return SuccessResponse(message="密码重置成功")
+
+
+@router.post("/password/forgot", response_model=SuccessResponse, summary="忘记密码（兼容路径）")
+async def forgot_password_compat(
+        account: str,
+        verification_code: str,
+        new_password: str,
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    忘记密码（兼容路径）
+    """
+    await auth_service.reset_password(
+        account=account,
+        verification_code=verification_code,
+        new_password=new_password
+    )
+    
     return SuccessResponse(message="密码重置成功")
 
 
@@ -251,6 +286,115 @@ async def bind_email(
     )
 
     return SuccessResponse(message="邮箱绑定成功")
+
+
+@router.get("/validate", response_model=BaseResponse[dict], summary="验证Token")
+async def validate_token(
+        current_user: User = Depends(get_current_active_user)
+) -> Any:
+    """
+    验证Token有效性
+    """
+    return BaseResponse(
+        data={
+            "valid": True,
+            "user_id": str(current_user.id),
+            "username": current_user.username
+        },
+        message="Token有效"
+    )
+
+
+@router.post("/reset-password", response_model=SuccessResponse, summary="重置密码")
+async def reset_password(
+        account: str,
+        verification_code: str,
+        new_password: str,
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    重置密码
+    """
+    await auth_service.reset_password(
+        account=account,
+        verification_code=verification_code,
+        new_password=new_password
+    )
+
+    return SuccessResponse(message="密码重置成功")
+
+
+@router.post("/verify-email", response_model=SuccessResponse, summary="验证邮箱")
+async def verify_email(
+        email: str,
+        verification_code: str,
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    验证邮箱
+    """
+    await auth_service.verify_email(
+        email=email,
+        verification_code=verification_code
+    )
+
+    return SuccessResponse(message="邮箱验证成功")
+
+
+@router.post("/social", response_model=BaseResponse[TokenResponse], summary="社交登录")
+async def social_login(
+        provider: str,
+        access_token: str,
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    社交登录
+    """
+    result = await auth_service.social_login(
+        provider=provider,
+        access_token=access_token
+    )
+
+    return BaseResponse(
+        data=result,
+        message="社交登录成功"
+    )
+
+
+@router.post("/bind-social", response_model=SuccessResponse, summary="绑定社交账号")
+async def bind_social(
+        provider: str,
+        access_token: str,
+        current_user: User = Depends(get_current_active_user),
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    绑定社交账号
+    """
+    await auth_service.bind_social_account(
+        user_id=current_user.id,
+        provider=provider,
+        access_token=access_token
+    )
+
+    return SuccessResponse(message="社交账号绑定成功")
+
+
+@router.post("/unbind-social", response_model=SuccessResponse, summary="解绑社交账号")
+async def unbind_social(
+        provider: str,
+        current_user: User = Depends(get_current_active_user),
+        auth_service: AuthService = Depends(get_auth_service)
+) -> Any:
+    """
+    解绑社交账号
+    """
+    await auth_service.unbind_social_account(
+        user_id=current_user.id,
+        provider=provider
+    )
+
+    return SuccessResponse(message="社交账号解绑成功")
 
 
 @router.delete("/account", response_model=SuccessResponse, summary="删除账户")

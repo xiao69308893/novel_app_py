@@ -9,10 +9,8 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_, or_, func, desc, asc
-from sqlalchemy.orm import selectinload, joinedload
 import uuid
 import random
-import json
 
 from ..models.novel import Novel
 from ..models.user import User, UserFavorite
@@ -22,15 +20,14 @@ from ..schemas.recommendation import (
     UserPreferenceResponse, RecommendationStatsResponse,
     DiversifiedRecommendationResponse
 )
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class RecommendationService(BaseService):
     """推荐系统服务类"""
 
-    def __init__(self, db: AsyncSession, cache: Optional[CacheManager] = None):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_personalized_recommendations(
         self,
@@ -601,7 +598,7 @@ class RecommendationService(BaseService):
             ]
             
             for key in cache_keys:
-                await self.cache.delete(key)
+                await self.cache_delete(key)
 
     # 私有方法
     async def _get_user_preferences(self, user_id: uuid.UUID) -> Dict[str, Any]:

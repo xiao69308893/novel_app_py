@@ -8,28 +8,23 @@
 from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_, or_, func, desc, asc, text
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import select, and_, or_, func, desc
 import uuid
-import json
 
 from ..models.novel import Novel
-from ..models.user import User
-from ..models.chapter import Chapter
 from ..schemas.search import (
     SearchNovelResponse, SearchAuthorResponse, SearchSuggestionResponse,
     SearchHistoryResponse, SearchStatsResponse, SearchTrendResponse,
     SearchFilterResponse, AutoCompleteResponse
 )
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class SearchService(BaseService):
     """搜索服务类"""
 
-    def __init__(self, db: AsyncSession, cache: Optional[CacheManager] = None):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def search_novels(
         self,

@@ -154,6 +154,55 @@ async def purchase_chapter(
 
     return BaseResponse(
         data=result,
-        message="章节购买成功"
+        message="购买成功"
+    )
+
+
+@router.get("/{chapter_id}/content", response_model=BaseResponse[dict], summary="获取章节内容")
+async def get_chapter_content(
+        chapter_id: str,
+        current_user: Optional[User] = Depends(get_current_active_user),
+        chapter_service: ChapterService = Depends(get_chapter_service)
+) -> Any:
+    """获取章节内容"""
+
+    content = await chapter_service.get_chapter_content(
+        chapter_id=chapter_id,
+        user_id=current_user.id if current_user else None
+    )
+
+    return BaseResponse(
+        data=content,
+        message="获取章节内容成功"
+    )
+
+
+@router.get("/{chapter_id}/next", response_model=BaseResponse[ChapterBasicResponse], summary="获取下一章")
+async def get_next_chapter(
+        chapter_id: str,
+        chapter_service: ChapterService = Depends(get_chapter_service)
+) -> Any:
+    """获取下一章"""
+
+    next_chapter = await chapter_service.get_next_chapter(chapter_id)
+
+    return BaseResponse(
+        data=next_chapter,
+        message="获取下一章成功"
+    )
+
+
+@router.get("/{chapter_id}/previous", response_model=BaseResponse[ChapterBasicResponse], summary="获取上一章")
+async def get_previous_chapter(
+        chapter_id: str,
+        chapter_service: ChapterService = Depends(get_chapter_service)
+) -> Any:
+    """获取上一章"""
+
+    previous_chapter = await chapter_service.get_previous_chapter(chapter_id)
+
+    return BaseResponse(
+        data=previous_chapter,
+        message="获取上一章成功"
     )
 

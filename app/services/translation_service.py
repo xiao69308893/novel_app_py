@@ -21,15 +21,14 @@ from ..models.novel import Novel
 from ..models.chapter import Chapter
 from ..models.user import User
 from ..core.exceptions import NotFoundException, BusinessException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class TranslationService(BaseService):
     """翻译业务服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_translation_projects(
             self,

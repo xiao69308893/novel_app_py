@@ -28,7 +28,7 @@ from app.core.exceptions import (
     custom_exception_handler,
     http_exception_handler
 )
-from app.api.v1 import api_router
+
 
 
 @asynccontextmanager
@@ -177,6 +177,7 @@ def setup_routes(app: FastAPI) -> None:
         }
 
     # API路由
+    from app.api.v1 import api_router
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

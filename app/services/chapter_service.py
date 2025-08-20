@@ -24,15 +24,14 @@ from ..schemas.chapter import (
 )
 from ..schemas.novel import CommentCreateRequest, CommentResponse
 from ..core.exceptions import NotFoundException, BusinessException, PermissionException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class ChapterService(BaseService):
     """章节服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_chapter_list(
             self,
@@ -418,3 +417,166 @@ class ChapterService(BaseService):
                 "chapter_number": next_chapter.chapter_number
             } if next_chapter else None
         }
+
+    async def get_novel_chapters(
+            self,
+            novel_id: str,
+            page: int = 1,
+            page_size: int = 50,
+            offset: int = 0
+    ) -> Tuple[List[ChapterBasicResponse], int]:
+        """获取小说章节列表"""
+        novel_uuid = uuid.UUID(novel_id)
+        
+        # 查询章节列表
+        query = select(Chapter).where(
+            Chapter.novel_id == novel_uuid
+        ).order_by(Chapter.chapter_number.asc()).offset(offset).limit(page_size)
+        
+        result = await self.db.execute(query)
+        chapters = result.scalars().all()
+        
+        # 获取总数
+        count_query = select(func.count(Chapter.id)).where(
+            Chapter.novel_id == novel_uuid
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+        
+        # 构建响应
+        chapter_responses = [
+            ChapterBasicResponse(
+                id=chapter.id,
+                title=chapter.title,
+                chapter_number=chapter.chapter_number,
+                volume_number=chapter.volume_number,
+                word_count=chapter.word_count,
+                is_vip=chapter.is_vip,
+                is_free=chapter.is_free,
+                price=chapter.price,
+                published_at=chapter.published_at,
+                is_purchased=False,
+                can_read=chapter.is_free or chapter.chapter_number <= 3
+            ) for chapter in chapters
+        ]
+        
+        return chapter_responses, total
+
+    async def get_chapter_content(
+            self,
+            chapter_id: str,
+            user_id: Optional[uuid.UUID] = None
+    ) -> Dict[str, Any]:
+        """获取章节内容"""
+        chapter_uuid = uuid.UUID(chapter_id)
+        
+        # 查询章节
+        query = select(Chapter).options(
+            joinedload(Chapter.novel)
+        ).where(Chapter.id == chapter_uuid)
+        
+        result = await self.db.execute(query)
+        chapter = result.scalar_one_or_none()
+        
+        if not chapter:
+            raise NotFoundException("章节不存在")
+        
+        # 检查阅读权限
+        has_permission = await self._check_reading_permission(chapter, user_id)
+        if not has_permission:
+            raise PermissionException("没有阅读权限，请先购买章节")
+        
+        # 更新阅读统计
+        if user_id:
+            await self._update_reading_stats(chapter, user_id)
+        
+        return {
+            "id": str(chapter.id),
+            "title": chapter.title,
+            "content": chapter.content,
+            "word_count": chapter.word_count,
+            "chapter_number": chapter.chapter_number,
+            "published_at": chapter.published_at,
+            "is_vip": chapter.is_vip,
+            "price": chapter.price
+        }
+
+    async def get_next_chapter(self, chapter_id: str) -> Optional[ChapterBasicResponse]:
+        """获取下一章"""
+        chapter_uuid = uuid.UUID(chapter_id)
+        
+        # 查询当前章节
+        current_query = select(Chapter).where(Chapter.id == chapter_uuid)
+        current_result = await self.db.execute(current_query)
+        current_chapter = current_result.scalar_one_or_none()
+        
+        if not current_chapter:
+            raise NotFoundException("章节不存在")
+        
+        # 查询下一章
+        next_query = select(Chapter).where(
+            and_(
+                Chapter.novel_id == current_chapter.novel_id,
+                Chapter.chapter_number > current_chapter.chapter_number
+            )
+        ).order_by(Chapter.chapter_number.asc()).limit(1)
+        
+        next_result = await self.db.execute(next_query)
+        next_chapter = next_result.scalar_one_or_none()
+        
+        if not next_chapter:
+            return None
+        
+        return ChapterBasicResponse(
+            id=next_chapter.id,
+            title=next_chapter.title,
+            chapter_number=next_chapter.chapter_number,
+            volume_number=next_chapter.volume_number,
+            word_count=next_chapter.word_count,
+            is_vip=next_chapter.is_vip,
+            is_free=next_chapter.is_free,
+            price=next_chapter.price,
+            published_at=next_chapter.published_at,
+            is_purchased=False,
+            can_read=next_chapter.is_free or next_chapter.chapter_number <= 3
+        )
+
+    async def get_previous_chapter(self, chapter_id: str) -> Optional[ChapterBasicResponse]:
+        """获取上一章"""
+        chapter_uuid = uuid.UUID(chapter_id)
+        
+        # 查询当前章节
+        current_query = select(Chapter).where(Chapter.id == chapter_uuid)
+        current_result = await self.db.execute(current_query)
+        current_chapter = current_result.scalar_one_or_none()
+        
+        if not current_chapter:
+            raise NotFoundException("章节不存在")
+        
+        # 查询上一章
+        previous_query = select(Chapter).where(
+            and_(
+                Chapter.novel_id == current_chapter.novel_id,
+                Chapter.chapter_number < current_chapter.chapter_number
+            )
+        ).order_by(Chapter.chapter_number.desc()).limit(1)
+        
+        previous_result = await self.db.execute(previous_query)
+        previous_chapter = previous_result.scalar_one_or_none()
+        
+        if not previous_chapter:
+            return None
+        
+        return ChapterBasicResponse(
+            id=previous_chapter.id,
+            title=previous_chapter.title,
+            chapter_number=previous_chapter.chapter_number,
+            volume_number=previous_chapter.volume_number,
+            word_count=previous_chapter.word_count,
+            is_vip=previous_chapter.is_vip,
+            is_free=previous_chapter.is_free,
+            price=previous_chapter.price,
+            published_at=previous_chapter.published_at,
+            is_purchased=False,
+            can_read=previous_chapter.is_free or previous_chapter.chapter_number <= 3
+        )

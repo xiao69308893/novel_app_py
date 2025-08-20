@@ -23,15 +23,14 @@ from ..schemas.novel import (
     AdjacentChaptersResponse, ChapterDetailResponse, ChapterListResponse
 )
 from ..core.exceptions import NotFoundException, BusinessException, PermissionException
-from ..utils.cache import CacheManager
 from .base import BaseService
 
 
 class NovelService(BaseService):
     """小说服务类"""
 
-    def __init__(self, db: AsyncSession, cache: CacheManager):
-        super().__init__(db, cache)
+    def __init__(self, db: AsyncSession):
+        super().__init__(db)
 
     async def get_novel_detail(
             self,
@@ -43,7 +42,7 @@ class NovelService(BaseService):
         if user_id:
             cache_key += f":{user_id}"
 
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return NovelDetailResponse.parse_obj(cached_data)
 
@@ -132,7 +131,7 @@ class NovelService(BaseService):
         response = NovelDetailResponse(**response_data)
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, response.dict(), expire=300)
 
         return response
 
@@ -257,7 +256,7 @@ class NovelService(BaseService):
     async def get_hot_novels(self, page: int = 1, limit: int = 20) -> NovelListResponse:
         """获取热门小说"""
         cache_key = f"hot_novels:{page}:{limit}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return NovelListResponse.parse_obj(cached_data)
 
@@ -293,14 +292,14 @@ class NovelService(BaseService):
         )
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, response.dict(), expire=300)
 
         return response
 
     async def get_new_novels(self, page: int = 1, limit: int = 20) -> NovelListResponse:
         """获取最新小说"""
         cache_key = f"new_novels:{page}:{limit}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return NovelListResponse.parse_obj(cached_data)
 
@@ -335,7 +334,7 @@ class NovelService(BaseService):
         )
 
         # 缓存结果
-        await self.cache.set(cache_key, response.dict(), expire=300)
+        await self.cache_set(cache_key, response.dict(), expire=300)
 
         return response
 
@@ -409,7 +408,7 @@ class NovelService(BaseService):
     ) -> List[NovelBasicResponse]:
         """获取相似小说"""
         cache_key = f"similar_novels:{novel_id}:{limit}"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return [NovelBasicResponse.parse_obj(item) for item in cached_data]
 
@@ -447,7 +446,7 @@ class NovelService(BaseService):
         items = [self._build_novel_basic_response(novel) for novel in novels]
 
         # 缓存结果
-        await self.cache.set(cache_key, [item.dict() for item in items], expire=600)
+        await self.cache_set(cache_key, [item.dict() for item in items], expire=600)
 
         return items
 
@@ -496,8 +495,8 @@ class NovelService(BaseService):
         await self.db.commit()
 
         # 清除相关缓存
-        await self.cache.delete(f"novel_detail:{novel_id}")
-        await self.cache.delete(f"user_favorites:{user_id}")
+        await self.cache_delete(f"novel_detail:{novel_id}")
+        await self.cache_delete(f"user_favorites:{user_id}")
 
     async def remove_from_favorites(
             self,
@@ -526,8 +525,8 @@ class NovelService(BaseService):
         await self.db.commit()
 
         # 清除相关缓存
-        await self.cache.delete(f"novel_detail:{novel_id}")
-        await self.cache.delete(f"user_favorites:{user_id}")
+        await self.cache_delete(f"novel_detail:{novel_id}")
+        await self.cache_delete(f"user_favorites:{user_id}")
 
     async def rate_novel(
             self,
@@ -585,12 +584,12 @@ class NovelService(BaseService):
         await self.db.commit()
 
         # 清除相关缓存
-        await self.cache.delete(f"novel_detail:{novel_id}")
+        await self.cache_delete(f"novel_detail:{novel_id}")
 
     async def get_categories(self) -> List[CategoryResponse]:
         """获取小说分类"""
         cache_key = "novel_categories"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return [CategoryResponse.parse_obj(item) for item in cached_data]
 
@@ -603,14 +602,201 @@ class NovelService(BaseService):
         items = [CategoryResponse.from_orm(category) for category in categories]
 
         # 缓存结果
-        await self.cache.set(cache_key, [item.dict() for item in items], expire=3600)
+        await self.cache_set(cache_key, [item.dict() for item in items], expire=3600)
 
         return items
+
+    async def get_tags(self) -> List[dict]:
+        """获取小说标签"""
+        cache_key = "novel_tags"
+        cached_data = await self.cache_get(cache_key)
+        if cached_data:
+            return cached_data
+
+        query = select(Tag).where(Tag.is_active == True).order_by(
+            Tag.sort_order, Tag.name
+        )
+        result = await self.db.execute(query)
+        tags = result.scalars().all()
+
+        items = [{
+            "id": str(tag.id),
+            "name": tag.name,
+            "description": tag.description,
+            "color": tag.color
+        } for tag in tags]
+
+        # 缓存结果
+        await self.cache_set(cache_key, items, expire=3600)
+
+        return items
+
+    async def get_rankings(
+            self,
+            ranking_type: str,
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[NovelBasicResponse], int]:
+        """获取小说排行榜"""
+        cache_key = f"novel_rankings:{ranking_type}:{page}:{page_size}"
+        cached_data = await self.cache_get(cache_key)
+        if cached_data:
+            novels_data = [NovelBasicResponse.parse_obj(item) for item in cached_data["novels"]]
+            return novels_data, cached_data["total"]
+
+        # 构建查询
+        query = select(Novel).options(
+            joinedload(Novel.author),
+            joinedload(Novel.category)
+        ).where(
+            Novel.publish_status == 'published'
+        )
+
+        # 根据排行榜类型排序
+        if ranking_type == "hot":
+            query = query.order_by(desc(Novel.view_count))
+        elif ranking_type == "new":
+            query = query.order_by(desc(Novel.created_at))
+        elif ranking_type == "rating":
+            query = query.order_by(desc(Novel.rating))
+        elif ranking_type == "favorite":
+            query = query.order_by(desc(Novel.favorite_count))
+        else:
+            query = query.order_by(desc(Novel.view_count))
+
+        # 获取总数
+        count_query = select(func.count(Novel.id)).where(
+            Novel.publish_status == 'published'
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+
+        # 分页查询
+        query = query.offset(offset).limit(page_size)
+        result = await self.db.execute(query)
+        novels = result.scalars().all()
+
+        # 构建响应
+        novel_responses = [self._build_novel_basic_response(novel) for novel in novels]
+
+        # 缓存结果
+        cache_data = {
+            "novels": [novel.dict() for novel in novel_responses],
+            "total": total
+        }
+        await self.cache_set(cache_key, cache_data, expire=1800)
+
+        return novel_responses, total
+
+    async def get_recommendations(
+            self,
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[NovelBasicResponse], int]:
+        """获取推荐小说"""
+        cache_key = f"novel_recommendations:{page}:{page_size}"
+        cached_data = await self.cache_get(cache_key)
+        if cached_data:
+            novels_data = [NovelBasicResponse.parse_obj(item) for item in cached_data["novels"]]
+            return novels_data, cached_data["total"]
+
+        # 简化实现：按评分和热度综合排序
+        query = select(Novel).options(
+            joinedload(Novel.author),
+            joinedload(Novel.category)
+        ).where(
+            and_(
+                Novel.publish_status == 'published',
+                Novel.rating >= 4.0
+            )
+        ).order_by(
+            desc(Novel.rating * 0.6 + Novel.view_count * 0.4)
+        )
+
+        # 获取总数
+        count_query = select(func.count(Novel.id)).where(
+            and_(
+                Novel.publish_status == 'published',
+                Novel.rating >= 4.0
+            )
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+
+        # 分页查询
+        query = query.offset(offset).limit(page_size)
+        result = await self.db.execute(query)
+        novels = result.scalars().all()
+
+        # 构建响应
+        novel_responses = [self._build_novel_basic_response(novel) for novel in novels]
+
+        # 缓存结果
+        cache_data = {
+            "novels": [novel.dict() for novel in novel_responses],
+            "total": total
+        }
+        await self.cache_set(cache_key, cache_data, expire=1800)
+
+        return novel_responses, total
+
+    async def get_completed_novels(
+            self,
+            page: int = 1,
+            page_size: int = 20,
+            offset: int = 0
+    ) -> Tuple[List[NovelBasicResponse], int]:
+        """获取完结小说"""
+        cache_key = f"completed_novels:{page}:{page_size}"
+        cached_data = await self.cache_get(cache_key)
+        if cached_data:
+            novels_data = [NovelBasicResponse.parse_obj(item) for item in cached_data["novels"]]
+            return novels_data, cached_data["total"]
+
+        # 查询完结小说
+        query = select(Novel).options(
+            joinedload(Novel.author),
+            joinedload(Novel.category)
+        ).where(
+            and_(
+                Novel.publish_status == 'published',
+                Novel.status == 'completed'
+            )
+        ).order_by(desc(Novel.last_update_time))
+
+        # 获取总数
+        count_query = select(func.count(Novel.id)).where(
+            and_(
+                Novel.publish_status == 'published',
+                Novel.status == 'completed'
+            )
+        )
+        total_result = await self.db.execute(count_query)
+        total = total_result.scalar()
+
+        # 分页查询
+        query = query.offset(offset).limit(page_size)
+        result = await self.db.execute(query)
+        novels = result.scalars().all()
+
+        # 构建响应
+        novel_responses = [self._build_novel_basic_response(novel) for novel in novels]
+
+        # 缓存结果
+        cache_data = {
+            "novels": [novel.dict() for novel in novel_responses],
+            "total": total
+        }
+        await self.cache_set(cache_key, cache_data, expire=1800)
+
+        return novel_responses, total
 
     async def get_hot_keywords(self) -> List[str]:
         """获取热门搜索关键词"""
         cache_key = "hot_keywords"
-        cached_data = await self.cache.get(cache_key)
+        cached_data = await self.cache_get(cache_key)
         if cached_data:
             return cached_data
 
@@ -622,7 +808,7 @@ class NovelService(BaseService):
         ]
 
         # 缓存结果
-        await self.cache.set(cache_key, keywords, expire=3600)
+        await self.cache_set(cache_key, keywords, expire=3600)
 
         return keywords
 

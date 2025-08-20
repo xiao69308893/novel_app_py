@@ -6,7 +6,7 @@
 """
 
 from typing import Any, Optional
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_db
@@ -28,7 +28,6 @@ from app.models.user import User
 router = APIRouter()
 
 
-# 依赖注入
 def get_admin_service(db: AsyncSession = Depends(get_db)) -> AdminService:
     """获取管理员服务"""
     return AdminService(db)
@@ -51,9 +50,9 @@ async def get_system_stats(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取系统统计信息"""
-    
+
     stats = await admin_service.get_system_stats()
-    
+
     return BaseResponse(
         data=stats,
         message="获取系统统计成功"
@@ -67,9 +66,9 @@ async def get_user_stats(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取用户统计信息"""
-    
+
     stats = await admin_service.get_user_stats(period)
-    
+
     return BaseResponse(
         data=stats,
         message="获取用户统计成功"
@@ -83,9 +82,9 @@ async def get_novel_stats(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取小说统计信息"""
-    
+
     stats = await admin_service.get_novel_stats(period)
-    
+
     return BaseResponse(
         data=stats,
         message="获取小说统计成功"
@@ -99,9 +98,9 @@ async def get_revenue_stats(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取收入统计信息"""
-    
+
     stats = await admin_service.get_revenue_stats(period)
-    
+
     return BaseResponse(
         data=stats,
         message="获取收入统计成功"
@@ -121,7 +120,7 @@ async def get_users(
         user_service: UserService = Depends(get_user_service)
 ) -> Any:
     """获取用户列表"""
-    
+
     users, total = await user_service.get_users_for_admin(
         keyword=keyword,
         status=status,
@@ -130,7 +129,7 @@ async def get_users(
         sort_order=sort_order,
         **pagination
     )
-    
+
     return ListResponse(
         data=users,
         pagination={
@@ -153,9 +152,9 @@ async def get_user_detail(
         user_service: UserService = Depends(get_user_service)
 ) -> Any:
     """获取用户详情"""
-    
+
     user = await user_service.get_user_by_id(user_id)
-    
+
     return BaseResponse(
         data=user,
         message="获取用户详情成功"
@@ -171,14 +170,14 @@ async def update_user_status(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """更新用户状态（封禁/解封）"""
-    
+
     await admin_service.update_user_status(
         user_id=user_id,
         status=status,
         reason=reason,
         admin_id=current_admin.id
     )
-    
+
     return SuccessResponse(message="用户状态更新成功")
 
 
@@ -189,9 +188,9 @@ async def delete_user(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """删除用户"""
-    
+
     await admin_service.delete_user(user_id, current_admin.id)
-    
+
     return SuccessResponse(message="用户删除成功")
 
 
@@ -209,7 +208,7 @@ async def get_novels(
         novel_service: NovelService = Depends(get_novel_service)
 ) -> Any:
     """获取小说列表"""
-    
+
     novels, total = await novel_service.get_novels_for_admin(
         keyword=keyword,
         status=status,
@@ -219,7 +218,7 @@ async def get_novels(
         sort_order=sort_order,
         **pagination
     )
-    
+
     return ListResponse(
         data=novels,
         pagination={
@@ -244,14 +243,14 @@ async def update_novel_status(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """更新小说状态（审核/下架）"""
-    
+
     await admin_service.update_novel_status(
         novel_id=novel_id,
         status=status,
         reason=reason,
         admin_id=current_admin.id
     )
-    
+
     return SuccessResponse(message="小说状态更新成功")
 
 
@@ -262,9 +261,9 @@ async def delete_novel(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """删除小说"""
-    
+
     await admin_service.delete_novel(novel_id, current_admin.id)
-    
+
     return SuccessResponse(message="小说删除成功")
 
 
@@ -276,9 +275,9 @@ async def get_admins(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取管理员列表"""
-    
+
     admins, total = await admin_service.get_admins(**pagination)
-    
+
     return ListResponse(
         data=admins,
         pagination={
@@ -301,9 +300,9 @@ async def create_admin(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """创建管理员"""
-    
+
     admin = await admin_service.create_admin(admin_data, current_admin.id)
-    
+
     return BaseResponse(
         data=admin,
         message="管理员创建成功"
@@ -318,9 +317,9 @@ async def update_admin(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """更新管理员信息"""
-    
+
     admin = await admin_service.update_admin(admin_id, admin_data, current_admin.id)
-    
+
     return BaseResponse(
         data=admin,
         message="管理员更新成功"
@@ -334,9 +333,9 @@ async def delete_admin(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """删除管理员"""
-    
+
     await admin_service.delete_admin(admin_id, current_admin.id)
-    
+
     return SuccessResponse(message="管理员删除成功")
 
 
@@ -352,7 +351,7 @@ async def get_admin_logs(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取操作日志"""
-    
+
     logs, total = await admin_service.get_admin_logs(
         admin_id=admin_id,
         action=action,
@@ -360,7 +359,7 @@ async def get_admin_logs(
         end_date=end_date,
         **pagination
     )
-    
+
     return ListResponse(
         data=logs,
         pagination={
@@ -385,12 +384,12 @@ async def get_pending_moderation(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取待审核内容"""
-    
+
     items, total = await admin_service.get_pending_moderation(
         content_type=content_type,
         **pagination
     )
-    
+
     return ListResponse(
         data=items,
         pagination={
@@ -414,13 +413,13 @@ async def approve_content(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """审核通过"""
-    
+
     await admin_service.approve_content(
         item_id=item_id,
         content_type=content_type,
         admin_id=current_admin.id
     )
-    
+
     return SuccessResponse(message="审核通过")
 
 
@@ -433,14 +432,14 @@ async def reject_content(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """审核拒绝"""
-    
+
     await admin_service.reject_content(
         item_id=item_id,
         content_type=content_type,
         reason=reason,
         admin_id=current_admin.id
     )
-    
+
     return SuccessResponse(message="审核拒绝")
 
 
@@ -451,9 +450,9 @@ async def get_system_config(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """获取系统配置"""
-    
+
     config = await admin_service.get_system_config()
-    
+
     return BaseResponse(
         data=config,
         message="获取系统配置成功"
@@ -467,9 +466,9 @@ async def update_system_config(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """更新系统配置"""
-    
+
     await admin_service.update_system_config(config_data, current_admin.id)
-    
+
     return SuccessResponse(message="系统配置更新成功")
 
 
@@ -482,9 +481,9 @@ async def export_users(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """导出用户数据"""
-    
+
     result = await admin_service.export_users(format, filters, current_admin.id)
-    
+
     return BaseResponse(
         data=result,
         message="用户数据导出成功"
@@ -499,9 +498,9 @@ async def export_novels(
         admin_service: AdminService = Depends(get_admin_service)
 ) -> Any:
     """导出小说数据"""
-    
+
     result = await admin_service.export_novels(format, filters, current_admin.id)
-    
+
     return BaseResponse(
         data=result,
         message="小说数据导出成功"
